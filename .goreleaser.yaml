@@ -1,0 +1,72 @@
+version: 2
+
+project_name: model-orchestrator
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: model-orchestrator
+    main: ./cmd/model-orchestrator
+    binary: model-orchestrator
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/sorafujitani/model-orchestrator/internal/cli.Version={{.Version}}
+      - -X github.com/sorafujitani/model-orchestrator/internal/cli.Commit={{.ShortCommit}}
+      - -X github.com/sorafujitani/model-orchestrator/internal/cli.Date={{.CommitDate}}
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - LICENSE
+      - README.md
+      - config.example.toml
+      - .agents/skills/model-orchestrator/SKILL.md
+      - .agents/skills/model-orchestrator/agents/openai.yaml
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot+{{ .ShortCommit }}"
+
+changelog:
+  use: github
+  sort: asc
+
+release:
+  github:
+    owner: sorafujitani
+    name: model-orchestrator
+  draft: false
+  prerelease: auto
+
+brews:
+  - name: model-orchestrator
+    repository:
+      owner: sorafujitani
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/sorafujitani/model-orchestrator
+    description: Local agent/model orchestration supervisor
+    license: MIT
+    install: |
+      bin.install "model-orchestrator"
+    test: |
+      system "#{bin}/model-orchestrator", "version"
