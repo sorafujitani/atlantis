@@ -1,0 +1,72 @@
+version: 2
+
+project_name: atlantis
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: atlantis
+    main: ./cmd/atlantis
+    binary: atlantis
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/sorafujitani/atlantis/internal/cli.Version={{.Version}}
+      - -X github.com/sorafujitani/atlantis/internal/cli.Commit={{.ShortCommit}}
+      - -X github.com/sorafujitani/atlantis/internal/cli.Date={{.CommitDate}}
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - LICENSE
+      - README.md
+      - config.example.toml
+      - .agents/skills/atlantis/**/*
+      - integrations/**/*
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot+{{ .ShortCommit }}"
+
+changelog:
+  use: github
+  sort: asc
+
+release:
+  github:
+    owner: sorafujitani
+    name: atlantis
+  draft: false
+  prerelease: auto
+
+brews:
+  - name: atlantis
+    repository:
+      owner: sorafujitani
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/sorafujitani/atlantis
+    description: Local coding-agent orchestration and persistent context
+    license: MIT
+    install: |
+      bin.install "atlantis"
+    test: |
+      system "#{bin}/atlantis", "version"

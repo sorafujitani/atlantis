@@ -1,0 +1,21 @@
+# atlantis
+
+Local coding-agent control plane for orchestration, persistent brain context, and playbooks.
+
+## Key documents
+
+- README.md: installation, commands, configuration, Agent Skill, and safety boundaries
+- docs/architecture.md: invariants, dependency direction, orchestration, brain, and state
+- docs/integrations.md: Claude Code, Codex, Pi, and skill installation
+- config.example.toml: adapter, model alias, and profile configuration
+- evals/smoke.json: versioned evaluation suite
+
+## Core packages
+
+- internal/orchestration: provider-neutral contracts and validation
+- internal/adapter: local CLI subprocess adapters and output normalization
+- internal/engine: Advisor, Orchestrator, budget, fallback, and resume
+- internal/state: append-only run events and snapshots
+- internal/brain: vault indexing, validation, context injection, and plan cleanup
+- .agents/skills/atlantis: unified operating mode and CLI workflow
+- internal/cli: command-line interface
