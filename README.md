@@ -43,7 +43,7 @@ Claude Code, Codex, and Pi setup is documented in [docs/integrations.md](./docs/
 
 ## Orchestration
 
-Atlantis delegates execution to existing CLIs and normalizes their structured results.
+Atlantis delegates execution to existing CLIs and normalizes their structured results. Built-in adapters cover Codex CLI, Claude Code, Grok Build, OpenCode, Cursor Agent, and GitHub Copilot.
 
 ```bash
 atlantis run --mode single --permission read \
@@ -54,6 +54,9 @@ atlantis run --mode advisor --permission read \
 
 atlantis run --mode orchestrator \
   "Delegate independent investigations and synthesize the result"
+
+atlantis run --profile grok \
+  "Run this assignment with the locally authenticated Grok Build CLI"
 ```
 
 JSON output is available for host agents:
@@ -135,6 +138,8 @@ max_advisor_calls = 1
 max_retries = 1
 max_duration = "30m"
 ```
+
+The Grok Build adapter uses native JSON Schema output, captures usage and session IDs, and supports native resume. Read assignments run in `plan` permission mode; write assignments use `acceptEdits`. Grok's own memory and nested subagents are disabled so Atlantis remains the context and delegation owner.
 
 Custom adapters execute a command directly without a shell. Supported placeholders are `{prompt}`, `{cwd}`, `{model}`, and `{session}`.
 

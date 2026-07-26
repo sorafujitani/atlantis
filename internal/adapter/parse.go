@@ -16,26 +16,35 @@ func ParseOutput(adapterName string, output []byte, finalTextOnly bool) (orchest
 	var candidates []any
 	var sessionID string
 	usage := orchestration.Usage{}
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
-	for scanner.Scan() {
-		line := bytes.TrimSpace(scanner.Bytes())
-		if len(line) == 0 {
-			continue
+	trimmed := bytes.TrimSpace(output)
+	var document any
+	if len(trimmed) > 0 && json.Unmarshal(trimmed, &document) == nil {
+		events = append(events, append(json.RawMessage(nil), trimmed...))
+		candidates = append(candidates, document)
+		findSession(document, &sessionID)
+		findUsage(document, &usage)
+	} else {
+		scanner := bufio.NewScanner(bytes.NewReader(output))
+		scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+		for scanner.Scan() {
+			line := bytes.TrimSpace(scanner.Bytes())
+			if len(line) == 0 {
+				continue
+			}
+			var value any
+			if err := json.Unmarshal(line, &value); err != nil {
+				candidates = append(candidates, string(line))
+				continue
+			}
+			raw := append(json.RawMessage(nil), line...)
+			events = append(events, raw)
+			candidates = append(candidates, value)
+			findSession(value, &sessionID)
+			findUsage(value, &usage)
 		}
-		var value any
-		if err := json.Unmarshal(line, &value); err != nil {
-			candidates = append(candidates, string(line))
-			continue
+		if err := scanner.Err(); err != nil {
+			return orchestration.ExecutionResult{}, err
 		}
-		raw := append(json.RawMessage(nil), line...)
-		events = append(events, raw)
-		candidates = append(candidates, value)
-		findSession(value, &sessionID)
-		findUsage(value, &usage)
-	}
-	if err := scanner.Err(); err != nil {
-		return orchestration.ExecutionResult{}, err
 	}
 	for index := len(candidates) - 1; index >= 0; index-- {
 		if result, ok := findResult(candidates[index]); ok {
@@ -71,7 +80,7 @@ func findResult(value any) (orchestration.Result, bool) {
 				}
 			}
 		}
-		for _, key := range []string{"structured_output", "result", "content", "message", "item", "data", "text", "output"} {
+		for _, key := range []string{"structured_output", "structuredOutput", "result", "content", "message", "item", "data", "text", "output"} {
 			if nested, exists := typed[key]; exists {
 				if result, ok := findResult(nested); ok {
 					return result, true
@@ -108,7 +117,7 @@ func findResult(value any) (orchestration.Result, bool) {
 func findSession(value any, sessionID *string) {
 	switch typed := value.(type) {
 	case map[string]any:
-		for _, key := range []string{"thread_id", "session_id", "sessionID", "chat_id", "chatId"} {
+		for _, key := range []string{"thread_id", "session_id", "sessionID", "sessionId", "chat_id", "chatId"} {
 			if candidate, ok := typed[key].(string); ok && candidate != "" {
 				*sessionID = candidate
 			}

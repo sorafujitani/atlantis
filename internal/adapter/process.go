@@ -165,6 +165,27 @@ func (r *ProcessRunner) args(inv Invocation, schemaFile, schemaJSON string) ([]s
 			args = append(args, "--resume", resumeID)
 		}
 		return args, "", nil
+	case "grok":
+		permissionMode := "plan"
+		if inv.Assignment.Permission == orchestration.PermissionWrite {
+			permissionMode = "acceptEdits"
+		}
+		args := append(base,
+			"--cwd", inv.Assignment.CWD,
+			"--output-format", "json",
+			"--json-schema", schemaJSON,
+			"--permission-mode", permissionMode,
+			"--no-memory",
+			"--no-subagents",
+		)
+		if inv.Model != "" {
+			args = append(args, "--model", inv.Model)
+		}
+		if resumeID != "" {
+			args = append(args, "--resume", resumeID)
+		}
+		args = append(args, "-p", inv.Prompt)
+		return args, "", nil
 	default:
 		args := make([]string, 0, len(base)+1)
 		hasPrompt := false
@@ -191,6 +212,8 @@ func capabilitiesFor(name string, args []string) Capabilities {
 	switch name {
 	case "codex", "claude":
 		return Capabilities{JSONStream: true, NativeSchema: true, Resume: true, Usage: true, Read: true, Write: true}
+	case "grok":
+		return Capabilities{NativeSchema: true, Resume: true, Usage: true, Read: true, Write: true}
 	case "opencode":
 		return Capabilities{JSONStream: true, Resume: true, Usage: true, Read: true, Write: false}
 	case "cursor":

@@ -17,6 +17,27 @@ func TestParseOutputFindsNestedResultAndSession(t *testing.T) {
 	}
 }
 
+func TestParseOutputFindsGrokBuildResult(t *testing.T) {
+	t.Parallel()
+	output := []byte(`{
+  "text": "{\"status\":\"completed\",\"summary\":\"done\",\"output\":\"ok\"}",
+  "sessionId": "grok-session",
+  "usage": {"input_tokens": 21, "output_tokens": 8},
+  "total_cost_usd": 0.012,
+  "structuredOutput": {"status":"completed","summary":"done","output":"ok","advice_request":null,"tasks":[]}
+}`)
+	result, err := ParseOutput("grok", output, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Session == nil || result.Session.SessionID != "grok-session" {
+		t.Fatalf("session = %#v", result.Session)
+	}
+	if result.Result.Output != "ok" || result.Result.Usage.InputTokens != 21 || result.Result.Usage.CostUSD != 0.012 {
+		t.Fatalf("result = %#v", result.Result)
+	}
+}
+
 func TestParseOutputFinalText(t *testing.T) {
 	t.Parallel()
 	result, err := ParseOutput("copilot", []byte("plain response\n"), true)
