@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Go 1.25.2
+- Go 1.25.8
 - golangci-lint 2.12.0
 - GoReleaser 2.x（release検証時）
 
