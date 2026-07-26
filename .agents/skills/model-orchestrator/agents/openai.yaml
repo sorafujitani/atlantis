@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Orchestrator"
+  short_description: "Run local multi-model Advisor and Orchestrator workflows"
+  default_prompt: "Use the local model-orchestrator CLI to execute this task with the appropriate agent/model orchestration mode."
