@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sorafujitani/model-orchestrator/internal/config"
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/config"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 type Capabilities struct {

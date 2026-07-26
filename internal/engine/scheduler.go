@@ -6,7 +6,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 type TaskOutcome struct {

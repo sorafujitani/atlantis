@@ -1,4 +1,4 @@
-// Package main provides the model-orchestrator executable.
+// Package main provides the atlantis executable.
 package main
 
 import (
@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sorafujitani/model-orchestrator/internal/cli"
+	"github.com/sorafujitani/atlantis/internal/cli"
 )
 
 func main() {

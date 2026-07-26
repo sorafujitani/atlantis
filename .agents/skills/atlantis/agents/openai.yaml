@@ -1,0 +1,4 @@
+interface:
+  display_name: "Atlantis"
+  short_description: "Orchestrate agents with durable, principle-grounded context"
+  default_prompt: "Use Atlantis to choose a playbook, load relevant brain context, delegate deliberately, and verify the result."

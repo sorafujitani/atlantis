@@ -1,15 +1,15 @@
 version: 2
 
-project_name: model-orchestrator
+project_name: atlantis
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: model-orchestrator
-    main: ./cmd/model-orchestrator
-    binary: model-orchestrator
+  - id: atlantis
+    main: ./cmd/atlantis
+    binary: atlantis
     env:
       - CGO_ENABLED=0
     goos:
@@ -22,9 +22,9 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/sorafujitani/model-orchestrator/internal/cli.Version={{.Version}}
-      - -X github.com/sorafujitani/model-orchestrator/internal/cli.Commit={{.ShortCommit}}
-      - -X github.com/sorafujitani/model-orchestrator/internal/cli.Date={{.CommitDate}}
+      - -X github.com/sorafujitani/atlantis/internal/cli.Version={{.Version}}
+      - -X github.com/sorafujitani/atlantis/internal/cli.Commit={{.ShortCommit}}
+      - -X github.com/sorafujitani/atlantis/internal/cli.Date={{.CommitDate}}
 
 archives:
   - formats: [tar.gz]
@@ -34,8 +34,8 @@ archives:
       - LICENSE
       - README.md
       - config.example.toml
-      - .agents/skills/model-orchestrator/SKILL.md
-      - .agents/skills/model-orchestrator/agents/openai.yaml
+      - .agents/skills/atlantis/**/*
+      - integrations/**/*
 
 checksum:
   name_template: checksums.txt
@@ -51,22 +51,22 @@ changelog:
 release:
   github:
     owner: sorafujitani
-    name: model-orchestrator
+    name: atlantis
   draft: false
   prerelease: auto
 
 brews:
-  - name: model-orchestrator
+  - name: atlantis
     repository:
       owner: sorafujitani
       name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
-    homepage: https://github.com/sorafujitani/model-orchestrator
-    description: Local agent/model orchestration supervisor
+    homepage: https://github.com/sorafujitani/atlantis
+    description: Local coding-agent orchestration and persistent context
     license: MIT
     install: |
-      bin.install "model-orchestrator"
+      bin.install "atlantis"
     test: |
-      system "#{bin}/model-orchestrator", "version"
+      system "#{bin}/atlantis", "version"

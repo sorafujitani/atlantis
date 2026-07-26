@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/config"
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/config"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 func TestGenericAdapterDoesNotUseShell(t *testing.T) {

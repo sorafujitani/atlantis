@@ -8,10 +8,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/sorafujitani/model-orchestrator/internal/adapter"
-	"github.com/sorafujitani/model-orchestrator/internal/config"
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
-	"github.com/sorafujitani/model-orchestrator/internal/state"
+	"github.com/sorafujitani/atlantis/internal/adapter"
+	"github.com/sorafujitani/atlantis/internal/config"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/state"
 )
 
 const plannerTaskID = "__plan"

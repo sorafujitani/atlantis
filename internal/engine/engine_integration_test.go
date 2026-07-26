@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/config"
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
-	"github.com/sorafujitani/model-orchestrator/internal/state"
+	"github.com/sorafujitani/atlantis/internal/config"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/state"
 )
 
 func TestEngineHybridEndToEndWithLocalProcess(t *testing.T) {

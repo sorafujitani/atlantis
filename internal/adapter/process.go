@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/config"
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/config"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 type ProcessRunner struct {
@@ -208,7 +208,7 @@ func safeEnvironment(extra []string) []string {
 		"PATH": true, "HOME": true, "USER": true, "LOGNAME": true, "SHELL": true,
 		"TMPDIR": true, "LANG": true, "LC_ALL": true, "TERM": true,
 		"XDG_CONFIG_HOME": true, "XDG_DATA_HOME": true, "XDG_STATE_HOME": true, "XDG_CACHE_HOME": true,
-		"CODEX_HOME": true, "CLAUDE_CONFIG_DIR": true,
+		"CODEX_HOME": true, "CLAUDE_CONFIG_DIR": true, "ATLANTIS_BRAIN_DIR": true,
 	}
 	for _, name := range extra {
 		allowed[name] = true
@@ -228,7 +228,7 @@ func resultSchemaFile() (string, string, func(), error) {
 	if err != nil {
 		return "", "", func() {}, err
 	}
-	dir, err := os.MkdirTemp("", "model-orchestrator-schema-")
+	dir, err := os.MkdirTemp("", "atlantis-schema-")
 	if err != nil {
 		return "", "", func() {}, err
 	}

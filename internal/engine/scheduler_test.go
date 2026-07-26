@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 func TestRunGraphSerializesWrites(t *testing.T) {

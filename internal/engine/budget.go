@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 type BudgetSnapshot struct {

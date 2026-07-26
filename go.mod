@@ -1,4 +1,4 @@
-module github.com/sorafujitani/model-orchestrator
+module github.com/sorafujitani/atlantis
 
 go 1.25.0
 

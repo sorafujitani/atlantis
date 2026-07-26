@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 // Suite groups versioned evaluation cases.

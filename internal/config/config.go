@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/pelletier/go-toml/v2"
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 type Adapter struct {
@@ -84,34 +84,34 @@ func Path(explicit string) (string, error) {
 	if explicit != "" {
 		return filepath.Abs(explicit)
 	}
-	if value := os.Getenv("MODEL_ORCHESTRATOR_CONFIG"); value != "" {
+	if value := os.Getenv("ATLANTIS_CONFIG"); value != "" {
 		return filepath.Abs(value)
 	}
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		return filepath.Join(xdg, "model-orchestrator", "config.toml"), nil
+		return filepath.Join(xdg, "atlantis", "config.toml"), nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("resolve home directory: %w", err)
 	}
-	return filepath.Join(home, ".config", "model-orchestrator", "config.toml"), nil
+	return filepath.Join(home, ".config", "atlantis", "config.toml"), nil
 }
 
 func StateDir(cfg Config) (string, error) {
-	if value := os.Getenv("MODEL_ORCHESTRATOR_STATE_DIR"); value != "" {
+	if value := os.Getenv("ATLANTIS_STATE_DIR"); value != "" {
 		return filepath.Abs(value)
 	}
 	if cfg.StateDir != "" {
 		return filepath.Abs(cfg.StateDir)
 	}
 	if xdg := os.Getenv("XDG_STATE_HOME"); xdg != "" {
-		return filepath.Join(xdg, "model-orchestrator"), nil
+		return filepath.Join(xdg, "atlantis"), nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("resolve home directory: %w", err)
 	}
-	return filepath.Join(home, ".local", "state", "model-orchestrator"), nil
+	return filepath.Join(home, ".local", "state", "atlantis"), nil
 }
 
 func Load(explicit string) (Config, string, error) {
@@ -140,7 +140,7 @@ func Load(explicit string) (Config, string, error) {
 }
 
 func (c *Config) normalize() error {
-	if value := os.Getenv("MODEL_ORCHESTRATOR_PROFILE"); value != "" {
+	if value := os.Getenv("ATLANTIS_PROFILE"); value != "" {
 		c.DefaultProfile = value
 	}
 	for name, profile := range c.Profiles {

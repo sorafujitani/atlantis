@@ -1,4 +1,4 @@
-// Package cli exposes the model-orchestrator command tree.
+// Package cli exposes the atlantis command tree.
 package cli
 
 import (
@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/config"
-	"github.com/sorafujitani/model-orchestrator/internal/engine"
-	"github.com/sorafujitani/model-orchestrator/internal/evaluation"
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
-	"github.com/sorafujitani/model-orchestrator/internal/state"
+	"github.com/sorafujitani/atlantis/internal/config"
+	"github.com/sorafujitani/atlantis/internal/engine"
+	"github.com/sorafujitani/atlantis/internal/evaluation"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/state"
 	"github.com/spf13/cobra"
 )
 
@@ -41,8 +41,8 @@ type app struct {
 func NewCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	a := &app{stdin: stdin, stdout: stdout, stderr: stderr, output: "plain"}
 	root := &cobra.Command{
-		Use:           "model-orchestrator",
-		Short:         "Local agent/model orchestration supervisor",
+		Use:           "atlantis",
+		Short:         "Local agent orchestration and persistent context",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -53,7 +53,7 @@ func NewCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	root.PersistentFlags().StringVarP(&a.output, "output", "o", "plain", "output format: plain or json")
 	root.AddCommand(
 		a.runCommand(), a.statusCommand(false), a.statusCommand(true), a.resumeCommand(),
-		a.cancelCommand(), a.doctorCommand(), a.evalCommand(), versionCommand(),
+		a.cancelCommand(), a.doctorCommand(), a.evalCommand(), a.brainCommand(), versionCommand(),
 	)
 	return root
 }
@@ -276,7 +276,7 @@ func versionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use: "version", Short: "Print version", Args: cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
-			_, err := fmt.Fprintf(command.OutOrStdout(), "model-orchestrator %s (%s, %s)\n", Version, Commit, Date)
+			_, err := fmt.Fprintf(command.OutOrStdout(), "atlantis %s (%s, %s)\n", Version, Commit, Date)
 			return err
 		},
 	}

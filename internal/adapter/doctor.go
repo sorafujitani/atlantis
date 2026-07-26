@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/config"
+	"github.com/sorafujitani/atlantis/internal/config"
 )
 
 type DoctorResult struct {

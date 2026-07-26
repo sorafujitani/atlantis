@@ -14,15 +14,15 @@
 
 ```text
 Agent Skill / CLI
-    |
-  Engine
-  /   \
-State Adapter
+    |          |
+  Engine     Brain
+  /   \        |
+State Adapter  Vault files
    \   /
 Contracts
 ```
 
-`orchestration` packageはCLIやprovider固有型を参照しません。`adapter`は外部CLIを共通`ExecutionResult`へ変換します。`engine`はrole、budget、DAG、retry、fallback、resumeを所有します。Agent SkillはCLIの選択・起動手順だけを持ちます。
+`orchestration` packageはCLIやprovider固有型を参照しません。`adapter`は外部CLIを共通`ExecutionResult`へ変換します。`engine`はrole、budget、DAG、retry、fallback、resumeを所有します。`brain`はvaultのindex、validation、plan lifecycleだけを所有し、orchestration stateやprovider credentialを参照しません。Agent Skillは両機能の利用手順とplaybookだけを持ちます。
 
 ## Advisor
 
@@ -43,7 +43,7 @@ Contracts
 ## State
 
 ```text
-~/.local/state/model-orchestrator/runs/<run-id>/
+~/.local/state/atlantis/runs/<run-id>/
 ├── events.jsonl
 └── lock
 ```

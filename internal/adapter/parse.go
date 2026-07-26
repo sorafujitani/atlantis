@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 func ParseOutput(adapterName string, output []byte, finalTextOnly bool) (orchestration.ExecutionResult, error) {

@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoadDefaultsWithoutFile(t *testing.T) {
-	t.Setenv("MODEL_ORCHESTRATOR_CONFIG", filepath.Join(t.TempDir(), "missing.toml"))
+	t.Setenv("ATLANTIS_CONFIG", filepath.Join(t.TempDir(), "missing.toml"))
 	cfg, _, err := Load("")
 	if err != nil {
 		t.Fatal(err)
@@ -22,7 +22,7 @@ func TestLoadDefaultsWithoutFile(t *testing.T) {
 
 func TestStateDirEnvironmentWins(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "state")
-	t.Setenv("MODEL_ORCHESTRATOR_STATE_DIR", dir)
+	t.Setenv("ATLANTIS_STATE_DIR", dir)
 	got, err := StateDir(Default())
 	if err != nil {
 		t.Fatal(err)

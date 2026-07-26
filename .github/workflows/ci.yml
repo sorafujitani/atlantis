@@ -28,7 +28,7 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build ./cmd/model-orchestrator
+        run: go build ./cmd/atlantis
 
   lint:
     runs-on: ubuntu-latest

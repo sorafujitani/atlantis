@@ -1,105 +1,125 @@
-# model-orchestrator
+# Atlantis
 
-[![CI](https://github.com/sorafujitani/model-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/sorafujitani/model-orchestrator/actions/workflows/ci.yml)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/sorafujitani/model-orchestrator)](https://go.dev/)
-[![License](https://img.shields.io/github/license/sorafujitani/model-orchestrator)](./LICENSE)
+[![CI](https://github.com/sorafujitani/atlantis/actions/workflows/ci.yml/badge.svg)](https://github.com/sorafujitani/atlantis/actions/workflows/ci.yml)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/sorafujitani/atlantis)](https://go.dev/)
+[![License](https://img.shields.io/github/license/sorafujitani/atlantis)](./LICENSE)
 
-ローカルで認証済みのagent CLIを組み合わせる、単一バイナリのmodel orchestratorです。上位モデルをAdvisorまたはOrchestrator、低コストモデルをExecutorまたはWorkerとして利用できます。
+Atlantis is a local control plane for coding agents. One binary provides bounded multi-model orchestration and a portable persistent-context vault. The bundled Agent Skill adds principle-grounded playbooks under the same `atlantis` name.
 
-providerのAPI keyは保存しません。Codex CLI、Claude Codeなどの既存認証とsession機能を、それぞれのCLIへ委譲します。
+Provider credentials remain owned by existing agent CLIs. Atlantis does not copy API keys, OAuth tokens, or native session files.
 
-## 動作モデル
-
-```text
-      orchestration request
-                 |
-       CLI and Agent Skill
-                 |
-       local run supervisor
-       /       |          \
-  planner   workers      advisor
-      |         |           |
-  local CLI subprocess adapters
-```
-
-対応する実行パターン:
-
-- `single`: 1つのExecutorで実行
-- `advisor`: Executorが必要な場合だけ上位Advisorへ問い合わせ、元sessionを再開
-- `orchestrator`: 上位OrchestratorがDAGを作成し、Workerへ委譲して結果を統合
-- `hybrid`: Orchestrator + Worker委譲に、WorkerからAdvisorへの限定的なescalationを追加
-
-## インストール
-
-### Go install
-
-```bash
-go install github.com/sorafujitani/model-orchestrator/cmd/model-orchestrator@latest
-```
-
-### ローカルcheckout
-
-```bash
-make install
-model-orchestrator version
-model-orchestrator doctor
-```
-
-`make install` は `${INSTALL_DIR:-$HOME/.local/bin}` に配置します。
-
-## 最初の実行
-
-設定ファイルがなくても、次の既定値で動きます。
-
-- premium: Codex CLIの既定モデル
-- standard: Claude Codeの既定モデル
-- default profile: Hybrid
-- state: `$XDG_STATE_HOME/model-orchestrator` または `~/.local/state/model-orchestrator`
-
-```bash
-# Claude executorによる単発実行
-model-orchestrator run --mode single \
-  --permission read \
-  "このrepositoryの構造を3行で要約して"
-
-# Advisor
-model-orchestrator run --mode advisor \
-  --permission read \
-  "2案を比較し、重要な判断だけ上位モデルへ相談して"
-
-# Orchestrator
-model-orchestrator run --mode orchestrator \
-  "独立調査をworkerへ委譲し、結果を統合して"
-```
-
-JSON出力:
-
-```bash
-model-orchestrator --output json run --mode single "Return READY in output."
-```
-
-## 設定
-
-解決順は flag > environment > config file > default です。
+## Components
 
 ```text
-$MODEL_ORCHESTRATOR_CONFIG
-$XDG_CONFIG_HOME/model-orchestrator/config.toml
-~/.config/model-orchestrator/config.toml
+                         atlantis
+                 /          |          \
+        operating mode   orchestration   brain
+          playbooks       supervisor      vault
+                              |             |
+                  Codex / Claude / others  Claude / Codex / Pi
 ```
 
-設定例は [config.example.toml](./config.example.toml) にあります。
+- **Operating mode.** Task-specific playbooks for features, bugs, refactors, investigations, performance work, and autonomous runs.
+- **Orchestration.** `single`, `advisor`, `orchestrator`, and `hybrid` execution over locally authenticated agent CLIs.
+- **Brain.** Deterministic indexes, wikilink validation, compact context injection, and transient plan cleanup.
+
+The vault is user data and stays outside this repository. The repository contains only the portable machinery and empty-vault behavior.
+
+## Install
+
+```bash
+go install github.com/sorafujitani/atlantis/cmd/atlantis@latest
+atlantis version
+atlantis doctor
+```
+
+From a checkout, install the binary, skill, and Pi integration together:
+
+```bash
+make install-all
+```
+
+Claude Code, Codex, and Pi setup is documented in [docs/integrations.md](./docs/integrations.md). Existing `model-orchestrator` and `sora-mode` users should follow [docs/migration.md](./docs/migration.md).
+
+## Orchestration
+
+Atlantis delegates execution to existing CLIs and normalizes their structured results.
+
+```bash
+atlantis run --mode single --permission read \
+  "Summarize this repository in three lines"
+
+atlantis run --mode advisor --permission read \
+  "Compare two designs and escalate only the consequential decision"
+
+atlantis run --mode orchestrator \
+  "Delegate independent investigations and synthesize the result"
+```
+
+JSON output is available for host agents:
+
+```bash
+atlantis --output json run --mode hybrid "<objective>"
+```
+
+Interrupted runs use append-only state and can be inspected or resumed:
+
+```bash
+atlantis status <run-id>
+atlantis inspect <run-id>
+atlantis resume <run-id>
+atlantis cancel <run-id>
+```
+
+## Brain
+
+The default vault is `~/brain`. Override it with `ATLANTIS_BRAIN_DIR` or `--dir`.
+
+```bash
+atlantis brain init
+atlantis brain index
+atlantis brain check
+atlantis brain inject
+atlantis brain plan finish <slug>
+```
+
+A vault has this shape:
+
+```text
+brain/
+├── index.md
+├── principles.md
+├── principles/
+├── workflow/
+├── env/
+├── codebase/
+└── plans/
+```
+
+Only active work belongs in `plans/`. Once implementation is verified complete, extract reusable knowledge and delete the plan with `atlantis brain plan finish`.
+
+## Configuration
+
+Resolution order is flag, environment, config file, then defaults.
+
+```text
+$ATLANTIS_CONFIG
+$XDG_CONFIG_HOME/atlantis/config.toml
+~/.config/atlantis/config.toml
+```
+
+Run state defaults to `$XDG_STATE_HOME/atlantis` or `~/.local/state/atlantis`. See [config.example.toml](./config.example.toml).
 
 ```toml
 default_profile = "default"
 
 [models.premium]
 adapter = "codex"
-model = "gpt-5.6"
+model = ""
 
 [models.standard]
 adapter = "claude"
-model = "sonnet"
+model = ""
 fallback = ["premium"]
 
 [profiles.default]
@@ -116,90 +136,19 @@ max_retries = 1
 max_duration = "30m"
 ```
 
-モデル名はCLIが受け付ける値をそのまま指定します。空文字なら各CLIの既定モデルを使います。
+Custom adapters execute a command directly without a shell. Supported placeholders are `{prompt}`, `{cwd}`, `{model}`, and `{session}`.
 
-### custom CLI adapter
+## Safety boundaries
 
-shellは起動しません。`command`と引数配列を直接実行し、placeholderだけを置換します。
+- Credentials and raw provider reasoning are not persisted.
+- Child-process environment variables use an allowlist.
+- Read assignments are bounded and parallelizable.
+- Write assignments use an exclusive lane.
+- Commands are executed as argument arrays, not shell strings.
+- Run state is private by default and supports convergent resume.
+- Brain plan deletion accepts only a single safe slug inside the vault's `plans/` directory.
 
-```toml
-[adapters.local-agent]
-command = "local-agent"
-args = ["run", "--model", "{model}", "--cwd", "{cwd}", "{prompt}"]
-inherit_env = ["LOCAL_AGENT_TOKEN"]
-```
-
-placeholder:
-
-- `{prompt}`
-- `{cwd}`
-- `{model}`
-- `{session}`
-
-custom adapterは既定でread-only、最終テキストのみとして扱います。
-
-## コマンド
-
-```text
-model-orchestrator run <objective>
-model-orchestrator status <run-id>
-model-orchestrator inspect <run-id>
-model-orchestrator resume <run-id>
-model-orchestrator cancel <run-id>
-model-orchestrator doctor
-model-orchestrator eval <suite.json>
-```
-
-### 再開
-
-run stateはappend-only JSONLとして保存されます。中断後は完了済みtaskを再実行せず、残りのtaskから再開します。
-
-```bash
-model-orchestrator status run_xxx
-model-orchestrator resume run_xxx
-```
-
-### 評価
-
-同じsuiteを複数profileで比較できます。
-
-```bash
-model-orchestrator --config config.example.toml --output json \
-  eval evals/smoke.json \
-  --profiles codex,claude
-```
-
-reportには成功数、実行時間、token、取得可能な場合のcostを含めます。subscription実行とAPI従量料金は同じものとして扱いません。
-
-## Agent Skill
-
-Agent SkillはCLIの薄い利用手順です。orchestration本体や状態管理をskill内へ重複させません。
-
-```bash
-make install-skill
-```
-
-またはSkills CLIからglobal installできます。
-
-```bash
-npx skills add https://github.com/sorafujitani/model-orchestrator \
-  --skill model-orchestrator -g -y
-```
-
-skillは依頼に応じて`single`、`advisor`、`orchestrator`、`hybrid`を選び、`model-orchestrator --output json run ...`を実行します。
-
-## 安全境界
-
-- API key、OAuth token、CLI credentialを読み取り・コピー・保存しない
-- child processへ渡す環境変数はallowlist方式
-- read assignmentは各CLIのread-only / plan modeで実行
-- write assignmentはexclusive laneで直列実行
-- shell command文字列を組み立てず、`exec`へ引数配列を渡す
-- state directoryは`0700`、event fileは`0600`
-- providerのraw reasoning eventは永続化しない
-- Advisor回数、総call数、retry、worker並列数、実行時間に上限を持つ
-
-## 開発
+## Development
 
 ```bash
 make test
@@ -209,8 +158,8 @@ make lint
 make build
 ```
 
-設計の詳細は [docs/architecture.md](./docs/architecture.md) を参照してください。
+See [docs/architecture.md](./docs/architecture.md), [docs/integrations.md](./docs/integrations.md), and [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-[MIT](./LICENSE)
+MIT

@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sorafujitani/model-orchestrator/internal/orchestration"
+	"github.com/sorafujitani/atlantis/internal/orchestration"
 )
 
 // EventType identifies a state transition in a run.

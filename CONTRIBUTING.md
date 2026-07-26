@@ -9,8 +9,8 @@
 ## Setup
 
 ```bash
-git clone https://github.com/sorafujitani/model-orchestrator
-cd model-orchestrator
+git clone https://github.com/sorafujitani/atlantis
+cd atlantis
 go mod download
 make test
 ```
