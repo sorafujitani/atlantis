@@ -15,6 +15,9 @@ command = "cursor-agent"
 [adapters.copilot]
 command = "copilot"
 
+[adapters.grok]
+command = "grok"
+
 [models.premium]
 adapter = "codex"
 model = ""
@@ -23,6 +26,10 @@ model = ""
 adapter = "claude"
 model = ""
 fallback = ["premium"]
+
+[models.grok]
+adapter = "grok"
+model = ""
 
 [profiles.default]
 mode = "hybrid"
@@ -57,6 +64,19 @@ executor = "standard"
 advisor = "standard"
 worker = "standard"
 reviewer = "standard"
+max_workers = 4
+max_calls = 20
+max_advisor_calls = 1
+max_retries = 1
+max_duration = "30m"
+
+[profiles.grok]
+mode = "single"
+orchestrator = "grok"
+executor = "grok"
+advisor = "grok"
+worker = "grok"
+reviewer = "grok"
 max_workers = 4
 max_calls = 20
 max_advisor_calls = 1

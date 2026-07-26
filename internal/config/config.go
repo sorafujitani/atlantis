@@ -56,10 +56,12 @@ func Default() Config {
 			"opencode": {Command: "opencode"},
 			"cursor":   {Command: "cursor-agent"},
 			"copilot":  {Command: "copilot"},
+			"grok":     {Command: "grok"},
 		},
 		Models: map[string]Model{
 			"premium":  {Adapter: "codex"},
 			"standard": {Adapter: "claude", Fallback: []string{"premium"}},
+			"grok":     {Adapter: "grok"},
 		},
 		Profiles: map[string]Profile{
 			"default": {
@@ -69,6 +71,20 @@ func Default() Config {
 				Advisor:         "premium",
 				Worker:          "standard",
 				Reviewer:        "premium",
+				MaxWorkers:      4,
+				MaxCalls:        20,
+				MaxAdvisorCalls: 1,
+				MaxRetries:      1,
+				MaxDuration:     30 * time.Minute,
+				MaxDurationText: "30m",
+			},
+			"grok": {
+				Mode:            orchestration.ModeSingle,
+				Orchestrator:    "grok",
+				Executor:        "grok",
+				Advisor:         "grok",
+				Worker:          "grok",
+				Reviewer:        "grok",
 				MaxWorkers:      4,
 				MaxCalls:        20,
 				MaxAdvisorCalls: 1,

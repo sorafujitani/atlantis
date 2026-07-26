@@ -18,6 +18,13 @@ func TestLoadDefaultsWithoutFile(t *testing.T) {
 	if _, err := cfg.Profile(""); err != nil {
 		t.Fatal(err)
 	}
+	grok, err := cfg.Profile("grok")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if grok.Executor != "grok" || cfg.Models["grok"].Adapter != "grok" {
+		t.Fatalf("grok profile = %#v, model = %#v", grok, cfg.Models["grok"])
+	}
 }
 
 func TestStateDirEnvironmentWins(t *testing.T) {
