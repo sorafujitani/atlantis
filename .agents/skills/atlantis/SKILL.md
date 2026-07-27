@@ -5,13 +5,12 @@ description: Atlantis is a portable agent operating mode backed by the atlantis 
 
 # Atlantis
 
-Atlantis combines three concerns behind one name:
+Atlantis combines two concerns behind one name:
 
 - An operating mode with task-specific playbooks.
-- A dormant local multi-model supervisor whose CLI entry points are disabled.
 - A portable brain vault for durable context.
 
-Read brain Markdown directly. Use the `atlantis` CLI for index maintenance, validation, safe plan cleanup, and historical run-state operations. Do not reimplement those mechanisms in prompts.
+Task execution remains owned by the current harness. Read brain Markdown directly and use the `atlantis` CLI only for index maintenance, validation, and safe plan cleanup.
 
 ## Start
 
@@ -30,20 +29,6 @@ Read brain Markdown directly. Use the `atlantis` CLI for index maintenance, vali
 - Inspect delegated artifacts directly. A delegate's summary is not proof.
 - Use reversible actions autonomously. Pause for destructive production actions, force-pushes to shared branches, data deletion, and customer-facing communication.
 - Keep prose concise and concrete. Explain user impact, maintainer impact, the decision, and the verification.
-
-## Orchestration
-
-Model routing is disabled. Do not invoke `atlantis run`, `atlantis resume`, or `atlantis eval`, and do not recreate their profile routing in prompts. Use the current harness directly when the user explicitly asks for delegation.
-
-Historical run state remains inspectable and cancellable without starting a model:
-
-```bash
-atlantis --output json status <run-id>
-atlantis --output json inspect <run-id>
-atlantis --output json cancel <run-id>
-```
-
-Never read, copy, or persist provider credentials or native session files.
 
 ## Brain
 

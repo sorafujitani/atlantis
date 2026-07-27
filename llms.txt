@@ -1,21 +1,16 @@
 # atlantis
 
-Portable coding-agent operating mode with persistent brain maintenance, playbooks, and dormant orchestration source.
+Portable coding-agent operating mode and persistent Brain maintenance.
 
 ## Key documents
 
-- README.md: installation, commands, configuration, Agent Skill, and safety boundaries
-- docs/architecture.md: invariants, dependency direction, orchestration, brain, and state
-- docs/integrations.md: Claude Code, Codex, Pi, OpenCode, and skill installation
-- config.example.toml: adapter, model alias, and profile configuration
-- evals/smoke.json: versioned evaluation suite
+- README.md: installation, commands, Agent Skill, and safety boundaries
+- docs/architecture.md: ownership and dependency direction
+- docs/integrations.md: Claude Code, Codex, Pi, OMP, OpenCode, and Skill installation
 
-## Core packages
+## Core
 
-- internal/orchestration: provider-neutral contracts and validation
-- internal/adapter: local CLI subprocess adapters and output normalization
-- internal/engine: dormant Advisor, Orchestrator, budget, fallback, and resume implementation
-- internal/state: append-only run events and snapshots
 - internal/brain: vault indexing, validation, and plan cleanup
-- .agents/skills/atlantis: unified operating mode and CLI workflow
-- internal/cli: command-line interface
+- internal/cli: Brain maintenance and version commands
+- integrations: native Brain context loading for supported harnesses
+- .agents/skills/atlantis: operating mode and playbooks

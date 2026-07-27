@@ -25,4 +25,4 @@ make lint
 make build
 ```
 
-外部CLIを使うintegration testではcredentialをfixtureやlogへ保存しないでください。新しいadapterは共通contract、cancel、invalid output、permission capabilityを検証してください。
+Harness integrationは、Atlantis CLIが利用できない場合にも既存のBrain Markdownを直接読めることを検証してください。

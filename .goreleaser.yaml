@@ -33,7 +33,6 @@ archives:
     files:
       - LICENSE
       - README.md
-      - config.example.toml
       - .agents/skills/atlantis/**/*
       - integrations/**/*
 

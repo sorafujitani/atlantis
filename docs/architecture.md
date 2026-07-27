@@ -2,60 +2,28 @@
 
 ## Invariants
 
-- roleとmodel/CLIを分離する。
-- 外部CLIの出力はadapter境界で検証し、内部では型付きresultだけを扱う。
-- supervisorだけがrun stateを更新する。
-- read taskはbounded parallel、write taskはexclusiveに実行する。
-- 完了eventは再実行より優先され、resumeは同じ終状態へ収束する。
-- native sessionが使える場合はresumeし、使えない場合はcheckpoint contextで再実行する。
-- raw provider reasoningとcredentialはstateへ保存しない。
-- BrainのMarkdownがcanonical dataであり、harnessはGoを介さず直接読む。
-- Goのbrain packageはderived index、validation、plan lifecycleだけを所有する。
-- model routingのengineとadapterはsourceに保持するが、`run`、`resume`、`eval`のCLI entry pointは無効化する。
+- Brain Markdown is canonical data.
+- Harnesses read `index.md` and linked notes through native filesystem APIs.
+- The Go CLI owns only derived indexes, validation, and transient plan cleanup.
+- The Agent Skill owns playbooks and working conventions.
+- The active coding-agent harness owns execution, delegation, progress, inspection, and cancellation.
 
 ## Dependency direction
 
 ```text
-Host integration ───────────────────────> Vault Markdown
-                                                ^
-CLI ──> Brain maintenance ──────────────────────┘
- |
- └──> Engine ──> State
-        |
-        └──> Adapter
-                |
-             Contracts
+Agent Skill ───────────────> Brain Markdown
+                                  ^
+Host integration ─────────────────┤
+                                  |
+CLI ──> Brain maintenance ─────────┘
 ```
 
-`orchestration` packageはCLIやprovider固有型を参照しません。`adapter`は外部CLIを共通`ExecutionResult`へ変換します。`engine`はrole、budget、DAG、retry、fallback、resumeを所有します。`brain`はvaultのindex、validation、plan lifecycleだけを所有し、context read、orchestration state、provider credentialを参照しません。Host integrationは`index.md`をnative filesystem APIで読みます。Agent Skillは両機能の利用手順とplaybookだけを持ちます。
+`internal/brain` does not know about host sessions or agent execution. Host integrations may ask the CLI to refresh derived indexes, but they read durable Markdown directly so context remains available when the binary is unavailable.
 
-`engine`と`adapter`はdormant sourceです。CLIはmodelを起動するcommandを同名のdisabled commandへ差し替えています。`status`、`inspect`、`cancel`はproviderを起動せず既存stateを扱うため残し、routing設定を検証せず`state_dir`だけを解決します。
+## Brain lifecycle
 
-## Advisor
-
-1. Executorを実行する。
-2. `needs_advice`なら構造化された`AdviceRequest`を検証する。
-3. Advisorをread permissionで実行する。
-4. Advisor結果をExecutorのnative sessionへ返す。
-5. Advisor回数の上限を超えた場合は停止する。
-
-## Orchestrator
-
-1. Orchestratorが最小DAGを返す。
-2. cycle、未知のdependency、role、permissionを検証する。
-3. readyなread taskを並列実行する。
-4. write taskを1件ずつ実行する。
-5. 全worker resultを元のOrchestrator sessionへ返して統合する。
-
-## State
-
-```text
-~/.local/state/atlantis/runs/<run-id>/
-├── events.jsonl
-└── lock
-```
-
-snapshotはevent replayで導出します。lockには実行中supervisorのPIDを保存し、stale PIDは次回起動時に回収します。
-event上は実行中でもlockのsupervisor PIDが生存していなければ、snapshotは`interrupted`を返します。`resume`はstale lockを回収して続行し、`cancel`は中断済みrunへterminal eventを冪等に追記します。
-
-保存するprovider情報は、正規化済みresult、usage、adapter名、native session IDだけです。
+1. A harness integration asks Atlantis to refresh derived indexes on an appropriate lifecycle event.
+2. The integration reads `brain/index.md` directly.
+3. The agent opens only the linked notes relevant to the current task.
+4. Verified reusable knowledge is written as Markdown.
+5. Completed plans are reduced to reusable knowledge and deleted.
