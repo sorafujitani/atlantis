@@ -178,3 +178,36 @@ func TestValidatePermissionCeilingRejectsWriteTaskInReadOnlyRun(t *testing.T) {
 		t.Fatalf("write ceiling rejected write task: %v", err)
 	}
 }
+
+func TestCancelMarksInterruptedRunAndIsIdempotent(t *testing.T) {
+	t.Parallel()
+	store, err := state.New(filepath.Join(t.TempDir(), "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := store.CreateRun(orchestration.Request{Objective: "test", CWD: "/tmp", Profile: "default"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	orchestrator := New(config.Default(), store)
+	if err := orchestrator.Cancel(runID); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := store.Snapshot(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Status != "cancelled" || snapshot.LastSequence != 2 {
+		t.Fatalf("snapshot after cancel = %#v", snapshot)
+	}
+	if err := orchestrator.Cancel(runID); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err = store.Snapshot(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Status != "cancelled" || snapshot.LastSequence != 2 {
+		t.Fatalf("snapshot after second cancel = %#v", snapshot)
+	}
+}

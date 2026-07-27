@@ -2,8 +2,10 @@ package brain
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -87,6 +89,29 @@ func TestFinishPlanRejectsTraversal(t *testing.T) {
 	}
 	if err := vault.FinishPlan("../outside"); err == nil {
 		t.Fatal("FinishPlan accepted path traversal")
+	}
+}
+
+func TestBrainInjectHookReadsIndexWithoutAtlantis(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	content := "# Brain\n\n## Principles\n- [[principles]]\n"
+	writeTestFile(t, root, "index.md", content)
+
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("locate test file")
+	}
+	script := filepath.Join(filepath.Dir(filename), "..", "..", "integrations", "hooks", "brain-inject.sh")
+	command := exec.Command("/bin/sh", script) //nolint:gosec // repository-owned test fixture
+	command.Env = []string{"ATLANTIS_BRAIN_DIR=" + root, "PATH=/usr/bin:/bin"}
+	output, err := command.Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := "Brain vault index. Read only the linked notes relevant to the task before acting.\n\n" + content
+	if string(output) != expected {
+		t.Fatalf("output = %q, want %q", output, expected)
 	}
 }
 

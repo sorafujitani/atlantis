@@ -25,6 +25,13 @@ func TestLoadDefaultsWithoutFile(t *testing.T) {
 	if grok.Executor != "grok" || cfg.Models["grok"].Adapter != "grok" {
 		t.Fatalf("grok profile = %#v, model = %#v", grok, cfg.Models["grok"])
 	}
+	omp, err := cfg.Profile("omp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if omp.Executor != "omp" || cfg.Models["omp"].Adapter != "omp" || cfg.Adapters["omp"].Command != "omp" {
+		t.Fatalf("omp profile = %#v, model = %#v, adapter = %#v", omp, cfg.Models["omp"], cfg.Adapters["omp"])
+	}
 }
 
 func TestStateDirEnvironmentWins(t *testing.T) {
@@ -49,5 +56,23 @@ func TestLoadRejectsUnknownAdapter(t *testing.T) {
 	}
 	if _, _, err := Load(path); err == nil {
 		t.Fatal("Load() accepted an unknown adapter")
+	}
+}
+
+func TestLoadStateDirIgnoresDormantRoutingValidation(t *testing.T) {
+	dir := t.TempDir()
+	stateDir := filepath.Join(dir, "state")
+	path := filepath.Join(dir, "config.toml")
+	data := []byte("state_dir = '" + stateDir + "'\ndefault_profile = 'missing'\n")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := LoadStateDir(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != stateDir {
+		t.Fatalf("LoadStateDir() = %q, want %q", got, stateDir)
 	}
 }

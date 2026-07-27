@@ -63,3 +63,43 @@ func TestAcquireReclaimsStaleLock(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestSnapshotDistinguishesRunningAndInterrupted(t *testing.T) {
+	t.Parallel()
+	store, err := New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := store.CreateRun(orchestration.Request{Objective: "test", CWD: "/tmp", Profile: "default"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := store.Snapshot(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Status != "interrupted" || snapshot.SupervisorPID != 0 {
+		t.Fatalf("snapshot without supervisor = %#v", snapshot)
+	}
+	release, err := store.Acquire(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err = store.Snapshot(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Status != "running" || snapshot.SupervisorPID != os.Getpid() {
+		t.Fatalf("snapshot with supervisor = %#v", snapshot)
+	}
+	if err := release(); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err = store.Snapshot(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Status != "interrupted" || snapshot.SupervisorPID != 0 {
+		t.Fatalf("snapshot after release = %#v", snapshot)
+	}
+}

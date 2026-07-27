@@ -1,6 +1,6 @@
 ---
 name: atlantis
-description: Atlantis is a portable agent operating mode backed by the atlantis CLI. Use it for nontrivial engineering work that benefits from principle-grounded playbooks, durable brain context, bounded multi-model delegation, verified execution, or /atlantis.
+description: Atlantis is a portable agent operating mode backed by the atlantis CLI. Use it for nontrivial engineering work that benefits from principle-grounded playbooks, durable brain context, verified execution, or /atlantis.
 ---
 
 # Atlantis
@@ -8,10 +8,10 @@ description: Atlantis is a portable agent operating mode backed by the atlantis 
 Atlantis combines three concerns behind one name:
 
 - An operating mode with task-specific playbooks.
-- A local multi-model supervisor for bounded delegation.
+- A dormant local multi-model supervisor whose CLI entry points are disabled.
 - A portable brain vault for durable context.
 
-Use the `atlantis` CLI as the execution and memory interface. Do not reimplement orchestration or index management in prompts.
+Read brain Markdown directly. Use the `atlantis` CLI for index maintenance, validation, safe plan cleanup, and historical run-state operations. Do not reimplement those mechanisms in prompts.
 
 ## Start
 
@@ -33,39 +33,17 @@ Use the `atlantis` CLI as the execution and memory interface. Do not reimplement
 
 ## Orchestration
 
-Check availability first:
+Model routing is disabled. Do not invoke `atlantis run`, `atlantis resume`, or `atlantis eval`, and do not recreate their profile routing in prompts. Use the current harness directly when the user explicitly asks for delegation.
 
-```bash
-command -v atlantis
-atlantis doctor
-```
-
-Choose the smallest mode that fits:
-
-- `single` uses one executor.
-- `advisor` lets an executor escalate one consequential decision.
-- `orchestrator` delegates an explicit DAG of independent tasks.
-- `hybrid` combines orchestration with bounded worker advice.
-
-Default to read-only. Use write permission only when the user requested mutations.
-
-```bash
-atlantis --output json run \
-  --mode advisor \
-  --permission read \
-  --cwd "$PWD" \
-  "<objective>"
-```
-
-For interrupted work, inspect before resuming:
+Historical run state remains inspectable and cancellable without starting a model:
 
 ```bash
 atlantis --output json status <run-id>
 atlantis --output json inspect <run-id>
-atlantis --output json resume <run-id>
+atlantis --output json cancel <run-id>
 ```
 
-Never read, copy, or persist provider credentials or native session files. Do not start a second run for work already owned by an active run.
+Never read, copy, or persist provider credentials or native session files.
 
 ## Brain
 
@@ -75,17 +53,16 @@ The vault defaults to `~/brain` and can be overridden with `ATLANTIS_BRAIN_DIR` 
 atlantis brain init
 atlantis brain index
 atlantis brain check
-atlantis brain inject
 atlantis brain plan finish <slug>
 ```
 
-Persist only verified knowledge that would improve a different task. Merge overlaps and delete stale notes. Plans are transient. After work is verified complete, extract durable lessons and run `atlantis brain plan finish`; never archive completed plans in the vault.
+Harness integrations read `brain/index.md` directly and agents open its linked notes as ordinary Markdown. Persist only verified knowledge that would improve a different task. Merge overlaps and delete stale notes. Plans are transient. After work is verified complete, extract durable lessons and run `atlantis brain plan finish`; never archive completed plans in the vault.
 
 ## Conventions Used by Playbooks
 
-- **how** means read-only exploration of the affected subsystem, directly or through `atlantis run --mode orchestrator --permission read`.
+- **how** means direct read-only exploration of the affected subsystem.
 - **why** means history inspection with `git log`, `git blame`, issues, and PRs.
-- **architect** means comparing concrete designs before implementation, using `advisor` or `orchestrator` mode when independence helps.
+- **architect** means comparing concrete designs before implementation.
 - **interrogate** means adversarial review from distinct correctness, simplicity, operational, and security lenses.
 - **control** means driving the matching browser, CLI, TUI, server, or simulator rather than relying on proxies.
 - **babysit** means owning CI and review follow-up after opening a PR.

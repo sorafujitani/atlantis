@@ -29,6 +29,8 @@ var (
 	Date = "unknown"
 )
 
+var errModelRoutingDisabled = errors.New("model routing is disabled; use the current harness directly")
+
 type app struct {
 	configPath string
 	output     string
@@ -42,7 +44,7 @@ func NewCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	a := &app{stdin: stdin, stdout: stdout, stderr: stderr, output: "plain"}
 	root := &cobra.Command{
 		Use:           "atlantis",
-		Short:         "Local agent orchestration and persistent context",
+		Short:         "Agent operating mode and persistent context maintenance",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -52,13 +54,26 @@ func NewCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	root.PersistentFlags().StringVar(&a.configPath, "config", "", "config file (default: XDG config path)")
 	root.PersistentFlags().StringVarP(&a.output, "output", "o", "plain", "output format: plain or json")
 	root.AddCommand(
-		a.runCommand(), a.statusCommand(false), a.statusCommand(true), a.resumeCommand(),
-		a.cancelCommand(), a.doctorCommand(), a.evalCommand(), a.brainCommand(), versionCommand(),
+		disabledModelCommand("run [arguments...]"), a.statusCommand(false), a.statusCommand(true),
+		disabledModelCommand("resume [arguments...]"), a.cancelCommand(), a.doctorCommand(),
+		disabledModelCommand("eval [arguments...]"), a.brainCommand(), versionCommand(),
 	)
 	return root
 }
 
-func (a *app) dependencies() (config.Config, *engine.Engine, error) {
+func disabledModelCommand(use string) *cobra.Command {
+	return &cobra.Command{
+		Use:                use,
+		Short:              "Disabled model-routing command",
+		Args:               cobra.ArbitraryArgs,
+		DisableFlagParsing: true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return errModelRoutingDisabled
+		},
+	}
+}
+
+func (a *app) routingDependencies() (config.Config, *engine.Engine, error) {
 	cfg, _, err := config.Load(a.configPath)
 	if err != nil {
 		return config.Config{}, nil, err
@@ -74,6 +89,18 @@ func (a *app) dependencies() (config.Config, *engine.Engine, error) {
 	return cfg, engine.New(cfg, store), nil
 }
 
+func (a *app) stateEngine() (*engine.Engine, error) {
+	root, err := config.LoadStateDir(a.configPath)
+	if err != nil {
+		return nil, err
+	}
+	store, err := state.New(root)
+	if err != nil {
+		return nil, err
+	}
+	return engine.New(config.Config{}, store), nil
+}
+
 func (a *app) runCommand() *cobra.Command {
 	var cwd, profile, mode, permission string
 	command := &cobra.Command{
@@ -81,7 +108,7 @@ func (a *app) runCommand() *cobra.Command {
 		Short: "Run an orchestration",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(command *cobra.Command, args []string) error {
-			_, orchestrator, err := a.dependencies()
+			_, orchestrator, err := a.routingDependencies()
 			if err != nil {
 				return err
 			}
@@ -124,7 +151,7 @@ func (a *app) statusCommand(inspect bool) *cobra.Command {
 	return &cobra.Command{
 		Use: name + " <run-id>", Short: short, Args: cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			_, orchestrator, err := a.dependencies()
+			orchestrator, err := a.stateEngine()
 			if err != nil {
 				return err
 			}
@@ -148,7 +175,7 @@ func (a *app) resumeCommand() *cobra.Command {
 	return &cobra.Command{
 		Use: "resume <run-id>", Short: "Resume an interrupted run", Args: cobra.ExactArgs(1),
 		RunE: func(command *cobra.Command, args []string) error {
-			_, orchestrator, err := a.dependencies()
+			_, orchestrator, err := a.routingDependencies()
 			if err != nil {
 				return err
 			}
@@ -163,9 +190,9 @@ func (a *app) resumeCommand() *cobra.Command {
 
 func (a *app) cancelCommand() *cobra.Command {
 	return &cobra.Command{
-		Use: "cancel <run-id>", Short: "Cancel an active run", Args: cobra.ExactArgs(1),
+		Use: "cancel <run-id>", Short: "Cancel an active or interrupted run", Args: cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			_, orchestrator, err := a.dependencies()
+			orchestrator, err := a.stateEngine()
 			if err != nil {
 				return err
 			}
@@ -179,9 +206,9 @@ func (a *app) cancelCommand() *cobra.Command {
 
 func (a *app) doctorCommand() *cobra.Command {
 	return &cobra.Command{
-		Use: "doctor", Short: "Inspect local model CLI availability", Args: cobra.NoArgs,
+		Use: "doctor", Short: "Inspect dormant model CLI availability", Args: cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
-			_, orchestrator, err := a.dependencies()
+			_, orchestrator, err := a.routingDependencies()
 			if err != nil {
 				return err
 			}
@@ -209,7 +236,7 @@ func (a *app) evalCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use: "eval <suite.json>", Short: "Evaluate orchestration profiles against a versioned suite", Args: cobra.ExactArgs(1),
 		RunE: func(command *cobra.Command, args []string) error {
-			cfg, orchestrator, err := a.dependencies()
+			cfg, orchestrator, err := a.routingDependencies()
 			if err != nil {
 				return err
 			}

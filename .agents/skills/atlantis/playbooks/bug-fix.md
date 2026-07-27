@@ -9,7 +9,7 @@ Be scientific. Every shipped line traces to runtime evidence. Belt-and-suspender
 3. Plan the fix. If it crosses a function boundary, **architect** first. Delegate implementation to a subagent (inherit the session model) with a specific scope; review the diff.
 4. Verify on the same surface; the original repro now passes. "Inconclusive" or wrong-surface is not a pass; flag it. Unit tests show branch behavior, not bug absence.
 5. Stage the commits so the failing repro lands before the fix in git history; the diff tells the story. Use the **tdd** cadence (failing test first) when the bug has a cheap local test path; skip it when the test would be expensive, integration-heavy, or unclear.
-   This is the canonical **prove-it-works** principle, the failing test first and the fix on top.
+   This is the canonical **sequence-verifiable-units** principle, the failing test first and the fix on top.
 6. Run **Opening a PR**.
 
 Investigation fans out **how** + **why** as parallel subagents.

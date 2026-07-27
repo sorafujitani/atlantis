@@ -5,7 +5,7 @@
 1. Capture a baseline trace on the matching surface via **control**.
 2. **how** to ground hypotheses; don't claim a perf ceiling without running it first.
 3. Plan the fix from the trace. If it crosses a function boundary, **architect** first. Delegate implementation to a subagent (inherit the session model); review the diff. Capture a post-fix trace.
-   Apply the **prove-it-works** principle, verifying each attempt before trying the next.
+   Apply the **sequence-verifiable-units** principle, verifying each attempt before trying the next.
 4. Parse and compare the artifacts (JSON to sqlite, diff). "Inconclusive" or wrong-surface is not a pass; flag it.
 5. Cite the measurement in the PR.
 6. Run **Opening a PR**.

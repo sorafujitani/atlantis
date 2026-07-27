@@ -1,18 +1,27 @@
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+const contextPrefix =
+  "Brain vault index. Read only the linked notes relevant to the task before acting.\n\n";
 
 export default function brainContext(pi: ExtensionAPI) {
   let context = "";
 
+  async function refreshIndex(): Promise<void> {
+    try {
+      await pi.exec("atlantis", ["brain", "index"], { timeout: 10_000 });
+    } catch {
+      // The durable index remains readable when the optional maintenance tool is unavailable.
+    }
+  }
+
   async function refresh(): Promise<void> {
-    const indexed = await pi.exec("atlantis", ["brain", "index"], { timeout: 10_000 });
-    if (indexed.code !== 0) {
-      throw new Error(`brain index regeneration failed: ${indexed.stderr}`);
-    }
-    const injected = await pi.exec("atlantis", ["brain", "inject"], { timeout: 10_000 });
-    if (injected.code !== 0) {
-      throw new Error(`brain context loading failed: ${injected.stderr}`);
-    }
-    context = injected.stdout;
+    await refreshIndex();
+    const root = process.env.ATLANTIS_BRAIN_DIR || join(homedir(), "brain");
+    context = contextPrefix + (await readFile(join(root, "index.md"), "utf8"));
   }
 
   pi.on("session_start", refresh);

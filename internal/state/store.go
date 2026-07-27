@@ -47,6 +47,7 @@ type Event struct {
 type Snapshot struct {
 	RunID          string                                   `json:"run_id"`
 	Status         string                                   `json:"status"`
+	SupervisorPID  int                                      `json:"supervisor_pid,omitempty"`
 	Request        *orchestration.Request                   `json:"request,omitempty"`
 	Plan           []orchestration.Task                     `json:"plan,omitempty"`
 	CompletedTasks map[string]orchestration.ExecutionResult `json:"completed_tasks,omitempty"`
@@ -201,6 +202,14 @@ func (s *Store) Snapshot(runID string) (Snapshot, error) {
 			snapshot.Status = "failed"
 		case EventRunCancelled:
 			snapshot.Status = "cancelled"
+		}
+	}
+	if snapshot.Status == "running" {
+		pid, err := s.RunningPID(runID)
+		if err != nil {
+			snapshot.Status = "interrupted"
+		} else {
+			snapshot.SupervisorPID = pid
 		}
 	}
 	return snapshot, nil

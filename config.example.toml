@@ -18,6 +18,9 @@ command = "copilot"
 [adapters.grok]
 command = "grok"
 
+[adapters.omp]
+command = "omp"
+
 [models.premium]
 adapter = "codex"
 model = ""
@@ -29,6 +32,10 @@ fallback = ["premium"]
 
 [models.grok]
 adapter = "grok"
+model = ""
+
+[models.omp]
+adapter = "omp"
 model = ""
 
 [profiles.default]
@@ -77,6 +84,19 @@ executor = "grok"
 advisor = "grok"
 worker = "grok"
 reviewer = "grok"
+max_workers = 4
+max_calls = 20
+max_advisor_calls = 1
+max_retries = 1
+max_duration = "30m"
+
+[profiles.omp]
+mode = "single"
+orchestrator = "omp"
+executor = "omp"
+advisor = "omp"
+worker = "omp"
+reviewer = "omp"
 max_workers = 4
 max_calls = 20
 max_advisor_calls = 1

@@ -9,20 +9,27 @@
 - 完了eventは再実行より優先され、resumeは同じ終状態へ収束する。
 - native sessionが使える場合はresumeし、使えない場合はcheckpoint contextで再実行する。
 - raw provider reasoningとcredentialはstateへ保存しない。
+- BrainのMarkdownがcanonical dataであり、harnessはGoを介さず直接読む。
+- Goのbrain packageはderived index、validation、plan lifecycleだけを所有する。
+- model routingのengineとadapterはsourceに保持するが、`run`、`resume`、`eval`のCLI entry pointは無効化する。
 
 ## Dependency direction
 
 ```text
-Agent Skill / CLI
-    |          |
-  Engine     Brain
-  /   \        |
-State Adapter  Vault files
-   \   /
-Contracts
+Host integration ───────────────────────> Vault Markdown
+                                                ^
+CLI ──> Brain maintenance ──────────────────────┘
+ |
+ └──> Engine ──> State
+        |
+        └──> Adapter
+                |
+             Contracts
 ```
 
-`orchestration` packageはCLIやprovider固有型を参照しません。`adapter`は外部CLIを共通`ExecutionResult`へ変換します。`engine`はrole、budget、DAG、retry、fallback、resumeを所有します。`brain`はvaultのindex、validation、plan lifecycleだけを所有し、orchestration stateやprovider credentialを参照しません。Agent Skillは両機能の利用手順とplaybookだけを持ちます。
+`orchestration` packageはCLIやprovider固有型を参照しません。`adapter`は外部CLIを共通`ExecutionResult`へ変換します。`engine`はrole、budget、DAG、retry、fallback、resumeを所有します。`brain`はvaultのindex、validation、plan lifecycleだけを所有し、context read、orchestration state、provider credentialを参照しません。Host integrationは`index.md`をnative filesystem APIで読みます。Agent Skillは両機能の利用手順とplaybookだけを持ちます。
+
+`engine`と`adapter`はdormant sourceです。CLIはmodelを起動するcommandを同名のdisabled commandへ差し替えています。`status`、`inspect`、`cancel`はproviderを起動せず既存stateを扱うため残し、routing設定を検証せず`state_dir`だけを解決します。
 
 ## Advisor
 
@@ -49,5 +56,6 @@ Contracts
 ```
 
 snapshotはevent replayで導出します。lockには実行中supervisorのPIDを保存し、stale PIDは次回起動時に回収します。
+event上は実行中でもlockのsupervisor PIDが生存していなければ、snapshotは`interrupted`を返します。`resume`はstale lockを回収して続行し、`cancel`は中断済みrunへterminal eventを冪等に追記します。
 
 保存するprovider情報は、正規化済みresult、usage、adapter名、native session IDだけです。

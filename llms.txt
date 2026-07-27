@@ -1,12 +1,12 @@
 # atlantis
 
-Local coding-agent control plane for orchestration, persistent brain context, and playbooks.
+Portable coding-agent operating mode with persistent brain maintenance, playbooks, and dormant orchestration source.
 
 ## Key documents
 
 - README.md: installation, commands, configuration, Agent Skill, and safety boundaries
 - docs/architecture.md: invariants, dependency direction, orchestration, brain, and state
-- docs/integrations.md: Claude Code, Codex, Pi, and skill installation
+- docs/integrations.md: Claude Code, Codex, Pi, OpenCode, and skill installation
 - config.example.toml: adapter, model alias, and profile configuration
 - evals/smoke.json: versioned evaluation suite
 
@@ -14,8 +14,8 @@ Local coding-agent control plane for orchestration, persistent brain context, an
 
 - internal/orchestration: provider-neutral contracts and validation
 - internal/adapter: local CLI subprocess adapters and output normalization
-- internal/engine: Advisor, Orchestrator, budget, fallback, and resume
+- internal/engine: dormant Advisor, Orchestrator, budget, fallback, and resume implementation
 - internal/state: append-only run events and snapshots
-- internal/brain: vault indexing, validation, context injection, and plan cleanup
+- internal/brain: vault indexing, validation, and plan cleanup
 - .agents/skills/atlantis: unified operating mode and CLI workflow
 - internal/cli: command-line interface

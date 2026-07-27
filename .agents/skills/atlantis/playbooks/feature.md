@@ -12,7 +12,7 @@
 4. Delegate code-writing to a subagent (inherit the session model; a light model only for mechanical bulk edits) with a specific scope (file paths, named data shape, success criteria); review its diff yourself. When the implementation admits multiple valid shapes (error handling, abstraction layer, test structure), delegate via the **arena** convention instead so the runners surface the alternatives and the cross-judge guards the pick. Mandatory: no skip-with-reason escape, and Laziness Protocol does not override it (the gain is review separation, not lines saved). You can spawn a subagent even though you are one; "the app is small" and "a subagent cannot spawn one" are both wrong. A subagent forbidden to spawn satisfies this by owning the diff directly with the same review separation; no "standing by" reply that waits on a nested agent. Comments follow the Operating Rules. Surgical edits, re-ground against the source for upstream-derived files. Port shared-primitive improvements to all consumers and verify each. Commit liberally.
 5. Verify on the matching surface. "Inconclusive" or wrong-surface is not a pass; flag it.
 6. Rebase into small, ordered commits; stack follow-ups.
-   Use the **prove-it-works** principle, building, verifying, and committing each small unit before the next.
+   Use the **sequence-verifiable-units** principle, building, verifying, and committing each small unit before the next.
 7. If the design is contested, **interrogate** before shipping.
 8. Run **Opening a PR**.
 

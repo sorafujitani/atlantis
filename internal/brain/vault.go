@@ -286,15 +286,6 @@ func (v *Vault) FinishPlan(slug string) error {
 	return v.Index()
 }
 
-// Inject returns the compact index context used by agent adapters.
-func (v *Vault) Inject() (string, error) {
-	data, err := os.ReadFile(filepath.Join(v.Root, "index.md"))
-	if err != nil {
-		return "", fmt.Errorf("read brain index: %w", err)
-	}
-	return "Brain vault index. Read only the linked notes relevant to the task before acting.\n\n" + string(data), nil
-}
-
 func (v *Vault) markdownFiles() (map[string]string, error) {
 	files := map[string]string{}
 	err := filepath.WalkDir(v.Root, func(path string, entry os.DirEntry, walkErr error) error {

@@ -15,6 +15,10 @@ func (a *app) brainCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "brain",
 		Short: "Manage portable agent memory",
+		Args:  cobra.NoArgs,
+		RunE: func(command *cobra.Command, _ []string) error {
+			return command.Help()
+		},
 	}
 	command.PersistentFlags().StringVar(&root, "dir", "", "brain directory (default: ATLANTIS_BRAIN_DIR or ~/brain)")
 	vault := func() (*brain.Vault, error) {
@@ -67,21 +71,6 @@ func (a *app) brainCommand() *cobra.Command {
 					return errInvalidBrain
 				}
 				return nil
-			},
-		},
-		&cobra.Command{
-			Use: "inject", Short: "Print compact brain context for an agent", Args: cobra.NoArgs,
-			RunE: func(_ *cobra.Command, _ []string) error {
-				selected, err := vault()
-				if err != nil {
-					return err
-				}
-				context, err := selected.Inject()
-				if err != nil {
-					return err
-				}
-				_, err = fmt.Fprint(a.stdout, context)
-				return err
 			},
 		},
 	)

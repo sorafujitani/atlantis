@@ -117,6 +117,12 @@ func findResult(value any) (orchestration.Result, bool) {
 func findSession(value any, sessionID *string) {
 	switch typed := value.(type) {
 	case map[string]any:
+		// OMP session header: {"type":"session","id":"..."}.
+		if typeName, ok := typed["type"].(string); ok && typeName == "session" {
+			if candidate, ok := typed["id"].(string); ok && candidate != "" {
+				*sessionID = candidate
+			}
+		}
 		for _, key := range []string{"thread_id", "session_id", "sessionID", "sessionId", "chat_id", "chatId"} {
 			if candidate, ok := typed[key].(string); ok && candidate != "" {
 				*sessionID = candidate
@@ -148,6 +154,26 @@ func findUsage(value any, usage *orchestration.Usage) {
 		for _, key := range []string{"cost_usd", "total_cost_usd"} {
 			if candidate, ok := typed[key].(float64); ok && candidate > usage.CostUSD {
 				usage.CostUSD = candidate
+			}
+		}
+		// OMP usage: {input, output, cost: {total}}.
+		if input := number(typed["input"]); input > 0 {
+			if _, hasOutput := typed["output"]; hasOutput || typed["cost"] != nil {
+				if input > usage.InputTokens {
+					usage.InputTokens = input
+				}
+			}
+		}
+		if output := number(typed["output"]); output > 0 {
+			if _, hasInput := typed["input"]; hasInput || typed["cost"] != nil {
+				if output > usage.OutputTokens {
+					usage.OutputTokens = output
+				}
+			}
+		}
+		if cost, ok := typed["cost"].(map[string]any); ok {
+			if total, ok := cost["total"].(float64); ok && total > usage.CostUSD {
+				usage.CostUSD = total
 			}
 		}
 		for _, nested := range typed {

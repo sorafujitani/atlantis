@@ -57,11 +57,13 @@ func Default() Config {
 			"cursor":   {Command: "cursor-agent"},
 			"copilot":  {Command: "copilot"},
 			"grok":     {Command: "grok"},
+			"omp":      {Command: "omp"},
 		},
 		Models: map[string]Model{
 			"premium":  {Adapter: "codex"},
 			"standard": {Adapter: "claude", Fallback: []string{"premium"}},
 			"grok":     {Adapter: "grok"},
+			"omp":      {Adapter: "omp"},
 		},
 		Profiles: map[string]Profile{
 			"default": {
@@ -85,6 +87,20 @@ func Default() Config {
 				Advisor:         "grok",
 				Worker:          "grok",
 				Reviewer:        "grok",
+				MaxWorkers:      4,
+				MaxCalls:        20,
+				MaxAdvisorCalls: 1,
+				MaxRetries:      1,
+				MaxDuration:     30 * time.Minute,
+				MaxDurationText: "30m",
+			},
+			"omp": {
+				Mode:            orchestration.ModeSingle,
+				Orchestrator:    "omp",
+				Executor:        "omp",
+				Advisor:         "omp",
+				Worker:          "omp",
+				Reviewer:        "omp",
 				MaxWorkers:      4,
 				MaxCalls:        20,
 				MaxAdvisorCalls: 1,
@@ -128,6 +144,31 @@ func StateDir(cfg Config) (string, error) {
 		return "", fmt.Errorf("resolve home directory: %w", err)
 	}
 	return filepath.Join(home, ".local", "state", "atlantis"), nil
+}
+
+// LoadStateDir resolves state storage without validating dormant model-routing configuration.
+func LoadStateDir(explicit string) (string, error) {
+	if os.Getenv("ATLANTIS_STATE_DIR") != "" {
+		return StateDir(Config{})
+	}
+	path, err := Path(explicit)
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(path) //nolint:gosec // reading the explicitly selected config file is intended
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return StateDir(Config{})
+		}
+		return "", fmt.Errorf("read config: %w", err)
+	}
+	var stateConfig struct {
+		StateDir string `toml:"state_dir"`
+	}
+	if err := toml.Unmarshal(data, &stateConfig); err != nil {
+		return "", fmt.Errorf("parse config: %w", err)
+	}
+	return StateDir(Config{StateDir: stateConfig.StateDir})
 }
 
 func Load(explicit string) (Config, string, error) {

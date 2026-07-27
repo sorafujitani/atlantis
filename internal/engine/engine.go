@@ -321,13 +321,34 @@ func (e *Engine) Doctor(ctx context.Context) []adapter.DoctorResult {
 }
 
 func (e *Engine) Cancel(runID string) error {
-	pid, err := e.store.RunningPID(runID)
+	snapshot, err := e.store.Snapshot(runID)
 	if err != nil {
 		return err
 	}
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return err
+	switch snapshot.Status {
+	case "completed", "failed", "cancelled":
+		return nil
+	case "running":
+		process, err := os.FindProcess(snapshot.SupervisorPID)
+		if err != nil {
+			return err
+		}
+		return process.Signal(syscall.SIGTERM)
+	case "interrupted":
+		release, err := e.store.Acquire(runID)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = release() }()
+		snapshot, err = e.store.Snapshot(runID)
+		if err != nil {
+			return err
+		}
+		if snapshot.Status == "completed" || snapshot.Status == "failed" || snapshot.Status == "cancelled" {
+			return nil
+		}
+		return e.store.Append(runID, state.EventRunCancelled, "", map[string]string{"reason": "cancelled after supervisor interruption"})
+	default:
+		return fmt.Errorf("run %s has unsupported status %q", runID, snapshot.Status)
 	}
-	return process.Signal(syscall.SIGTERM)
 }

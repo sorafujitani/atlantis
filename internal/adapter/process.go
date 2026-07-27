@@ -186,6 +186,32 @@ func (r *ProcessRunner) args(inv Invocation, schemaFile, schemaJSON string) ([]s
 		}
 		args = append(args, "-p", inv.Prompt)
 		return args, "", nil
+	case "omp":
+		// Headless JSON stream. Schema is prompt-side because omp has no --json-schema.
+		tools := ompReadTools
+		approvalMode := "always-ask"
+		if inv.Assignment.Permission == orchestration.PermissionWrite {
+			tools = ompWriteTools
+			approvalMode = "yolo"
+		}
+		args := append(base,
+			"-p",
+			"--mode", "json",
+			"--approval-mode", approvalMode,
+			"--tools", tools,
+			"--append-system-prompt", ompResultSchemaInstruction(schemaJSON),
+		)
+		if inv.Assignment.CWD != "" {
+			args = append(args, "--cwd", inv.Assignment.CWD)
+		}
+		if inv.Model != "" {
+			args = append(args, "--model", inv.Model)
+		}
+		if resumeID != "" {
+			args = append(args, "--resume", resumeID)
+		}
+		args = append(args, inv.Prompt)
+		return args, "", nil
 	default:
 		args := make([]string, 0, len(base)+1)
 		hasPrompt := false
@@ -214,6 +240,9 @@ func capabilitiesFor(name string, args []string) Capabilities {
 		return Capabilities{JSONStream: true, NativeSchema: true, Resume: true, Usage: true, Read: true, Write: true}
 	case "grok":
 		return Capabilities{NativeSchema: true, Resume: true, Usage: true, Read: true, Write: true}
+	case "omp":
+		// JSON stream + resume + usage; no native --json-schema (schema goes in system instructions).
+		return Capabilities{JSONStream: true, Resume: true, Usage: true, Read: true, Write: true}
 	case "opencode":
 		return Capabilities{JSONStream: true, Resume: true, Usage: true, Read: true, Write: false}
 	case "cursor":
@@ -224,6 +253,20 @@ func capabilitiesFor(name string, args []string) Capabilities {
 		joined := strings.Join(args, "\x00")
 		return Capabilities{Read: true, Resume: strings.Contains(joined, "{session}"), FinalTextOnly: true}
 	}
+}
+
+// Strictly read-only OMP tools for Atlantis read assignments.
+var ompReadTools = strings.Join([]string{"read", "grep", "glob", "web_search", "lsp", "inspect_image", "ast_grep"}, ",")
+
+// Coding OMP tools for write assignments. Excludes task/hub and memory tools so
+// Atlantis remains the sole orchestration and memory owner.
+var ompWriteTools = strings.Join([]string{
+	"read", "bash", "edit", "ast_grep", "ast_edit", "ask", "debug", "eval", "github", "glob", "grep", "lsp",
+	"inspect_image", "browser", "computer", "checkpoint", "rewind", "todo", "web_search", "write",
+}, ",")
+
+func ompResultSchemaInstruction(schemaJSON string) string {
+	return "Return only a single JSON object that validates against this Atlantis result schema. Do not wrap it in markdown fences or add prose outside the object.\n\n" + schemaJSON
 }
 
 func safeEnvironment(extra []string) []string {

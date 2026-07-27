@@ -4,7 +4,7 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/sorafujitani/atlantis)](https://go.dev/)
 [![License](https://img.shields.io/github/license/sorafujitani/atlantis)](./LICENSE)
 
-Atlantis is a local control plane for coding agents. One binary provides bounded multi-model orchestration and a portable persistent-context vault. The bundled Agent Skill adds principle-grounded playbooks under the same `atlantis` name.
+Atlantis is a portable operating mode and persistent-context maintenance tool for coding agents. The repository retains a bounded multi-model supervisor, but its model-routing CLI entry points are disabled. The bundled Agent Skill adds principle-grounded playbooks under the same `atlantis` name.
 
 Provider credentials remain owned by existing agent CLIs. Atlantis does not copy API keys, OAuth tokens, or native session files.
 
@@ -14,14 +14,14 @@ Provider credentials remain owned by existing agent CLIs. Atlantis does not copy
                          atlantis
                  /          |          \
         operating mode   orchestration   brain
-          playbooks       supervisor      vault
+          playbooks      dormant source   vault
                               |             |
-                  Codex / Claude / others  Claude / Codex / Pi
+                  Codex / Claude / OMP / others  Claude / Codex / Pi / OMP
 ```
 
 - **Operating mode.** Task-specific playbooks for features, bugs, refactors, investigations, performance work, and autonomous runs.
-- **Orchestration.** `single`, `advisor`, `orchestrator`, and `hybrid` execution over locally authenticated agent CLIs.
-- **Brain.** Deterministic indexes, wikilink validation, compact context injection, and transient plan cleanup.
+- **Orchestration.** The `single`, `advisor`, `orchestrator`, and `hybrid` implementation remains in source, but model-starting CLI commands are disabled.
+- **Brain.** Direct Markdown context reads with deterministic index maintenance, wikilink validation, and transient plan cleanup.
 
 The vault is user data and stays outside this repository. The repository contains only the portable machinery and empty-vault behavior.
 
@@ -30,49 +30,35 @@ The vault is user data and stays outside this repository. The repository contain
 ```bash
 go install github.com/sorafujitani/atlantis/cmd/atlantis@latest
 atlantis version
-atlantis doctor
 ```
 
-From a checkout, install the binary, skill, and Pi integration together:
+From a checkout, install the binary plus shared, OMP, and Pi integrations together:
 
 ```bash
 make install-all
 ```
 
-Claude Code, Codex, and Pi setup is documented in [docs/integrations.md](./docs/integrations.md). Existing `model-orchestrator` and `sora-mode` users should follow [docs/migration.md](./docs/migration.md).
+OMP, OpenCode, Claude Code, Codex, and Pi setup is documented in [docs/integrations.md](./docs/integrations.md). Existing `model-orchestrator` and `sora-mode` users should follow [docs/migration.md](./docs/migration.md).
 
 ## Orchestration
 
-Atlantis delegates execution to existing CLIs and normalizes their structured results. Built-in adapters cover Codex CLI, Claude Code, Grok Build, OpenCode, Cursor Agent, and GitHub Copilot.
+Model routing is intentionally disabled. These commands return a disabled error without starting a provider CLI:
 
 ```bash
-atlantis run --mode single --permission read \
-  "Summarize this repository in three lines"
-
-atlantis run --mode advisor --permission read \
-  "Compare two designs and escalate only the consequential decision"
-
-atlantis run --mode orchestrator \
-  "Delegate independent investigations and synthesize the result"
-
-atlantis run --profile grok \
-  "Run this assignment with the locally authenticated Grok Build CLI"
+atlantis run
+atlantis resume
+atlantis eval
 ```
 
-JSON output is available for host agents:
-
-```bash
-atlantis --output json run --mode hybrid "<objective>"
-```
-
-Interrupted runs use append-only state and can be inspected or resumed:
+The engine, adapters, profiles, fallback, and resume implementation remain tested in source. Historical append-only state can still be inspected or cancelled:
 
 ```bash
 atlantis status <run-id>
 atlantis inspect <run-id>
-atlantis resume <run-id>
 atlantis cancel <run-id>
 ```
+
+`status` reports `interrupted` when events say a run was active but its supervisor process is gone. `cancel` signals a live supervisor or records an idempotent terminal cancellation for an interrupted run.
 
 ## Brain
 
@@ -82,9 +68,10 @@ The default vault is `~/brain`. Override it with `ATLANTIS_BRAIN_DIR` or `--dir`
 atlantis brain init
 atlantis brain index
 atlantis brain check
-atlantis brain inject
 atlantis brain plan finish <slug>
 ```
+
+Harness integrations read `index.md` and linked notes directly. The Go CLI owns only deterministic index maintenance, validation, and safe plan cleanup.
 
 A vault has this shape:
 
@@ -111,7 +98,7 @@ $XDG_CONFIG_HOME/atlantis/config.toml
 ~/.config/atlantis/config.toml
 ```
 
-Run state defaults to `$XDG_STATE_HOME/atlantis` or `~/.local/state/atlantis`. See [config.example.toml](./config.example.toml).
+Run state defaults to `$XDG_STATE_HOME/atlantis` or `~/.local/state/atlantis`. The dormant routing configuration is retained in [config.example.toml](./config.example.toml) so the implementation remains testable.
 
 ```toml
 default_profile = "default"
@@ -140,6 +127,8 @@ max_duration = "30m"
 ```
 
 The Grok Build adapter uses native JSON Schema output, captures usage and session IDs, and supports native resume. Read assignments run in `plan` permission mode; write assignments use `acceptEdits`. Grok's own memory and nested subagents are disabled so Atlantis remains the context and delegation owner.
+
+The Oh My Pi (`omp`) adapter runs headless JSON mode (`-p --mode json`), captures session headers (`{"type":"session","id":...}`) and usage (`input`/`output`/`cost.total`), and supports `--model` and `--resume`. OMP has no `--json-schema` flag, so Atlantis injects the result schema through `--append-system-prompt`. Read assignments use a strict read-only tool allowlist with `--approval-mode always-ask`; write assignments use a coding tool allowlist that excludes `task`, `hub`, and memory tools (`retain`, `recall`, `reflect`, `memory_edit`, `learn`, `manage_skill`) with `--approval-mode yolo`, so Atlantis remains the orchestration and memory owner.
 
 Custom adapters execute a command directly without a shell. Supported placeholders are `{prompt}`, `{cwd}`, `{model}`, and `{session}`.
 
