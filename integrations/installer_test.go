@@ -22,7 +22,7 @@ func TestInstallWritesEmbeddedAdapterAndRemovesLegacyFile(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			data, err := os.ReadFile(installed)
+			data, err := os.ReadFile(installed) // #nosec G304 -- path returned by Install into t.TempDir
 			if err != nil {
 				t.Fatal(err)
 			}
