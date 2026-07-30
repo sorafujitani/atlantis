@@ -27,6 +27,7 @@ Task execution remains owned by the current harness. Read brain Markdown directl
 - Reproduce bugs before fixing them.
 - Keep shared writes serialized. Parallelize only independent read work or isolated worktrees.
 - Inspect delegated artifacts directly. A delegate's summary is not proof.
+- Script what is deterministic; spend agents on ambiguity. A step with a fixed recipe (capture, diff, check, format) becomes a script or checker per the **build-the-lever** principle; agent judgment goes to hypothesis choice, evidence interpretation, and deciding when a human is needed.
 - Use reversible actions autonomously. Pause for destructive production actions, force-pushes to shared branches, data deletion, and customer-facing communication.
 - **Never create a GitHub repository unless the user explicitly asks to create that repo in this conversation.** No `gh repo create`, no GitHub API repo creation, no “helpful” bootstrap push to a new remote. Local `git init` without a hosting remote is allowed only when the user asked for a local repo. If a remote is needed and none was requested, stop and ask.
 - **Never invent git or GitHub identity.** Use only the already-configured identity from `git config` / `gh auth` / explicit user instruction. Do not fabricate `user.email`, `user.name`, `*@users.noreply.github.com`, commit authors, `--author`, or collaborator invites. A wrong noreply address can attach the wrong GitHub user and become an access/privacy incident.
@@ -62,6 +63,7 @@ Harness integrations read `brain/index.md` directly and agents open its linked n
 
 - Investigation: `playbooks/investigation.md`
 - Bug fix: `playbooks/bug-fix.md`
+- Maintenance pipeline: `playbooks/maintenance-pipeline.md`
 - Feature: `playbooks/feature.md`
 - Refactoring or rename: `playbooks/refactoring.md`
 - Performance issue: `playbooks/perf-issue.md`

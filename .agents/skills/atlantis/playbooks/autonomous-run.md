@@ -8,5 +8,6 @@
    Sequence the work via the **sequence-verifiable-units** principle, verifying each unit before the next instead of batching checks at the end.
 4. Checkpoint every iteration via the **show-me-your-work** convention, a row for what changed and whether the predicate moved.
 5. Stop when the predicate is met. A plateau is not a stop, so keep going and pivot your approach to push past it. Surface a genuine dead end rather than spinning, and never relax the predicate to declare victory.
+6. Close with a cross-model audit. Hand the **show-me-your-work** log and the session transcript to a reviewer on a different model lineage; it checks that the logged decisions match what actually happened and that the predicate was met, not quietly relaxed. Fix or flag every mismatch before reporting done.
 
-**Reply:** the exit condition, iterations run, what landed, what was discarded, final predicate state.
+**Reply:** the exit condition, iterations run, what landed, what was discarded, final predicate state, the audit verdict.
