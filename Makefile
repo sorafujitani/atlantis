@@ -17,33 +17,31 @@ build:
 	go build -trimpath -ldflags "$(LD_FLAGS)" -o bin/atlantis ./cmd/atlantis
 
 install: build
-	install -d $(INSTALL_DIR)
-	install -m 0755 bin/atlantis $(INSTALL_DIR)/atlantis
+	install -d "$(INSTALL_DIR)"
+	install -m 0755 bin/atlantis "$(INSTALL_DIR)/atlantis"
 
 install-skill:
-	rm -rf $(SKILLS_DIR)/atlantis
-	install -d $(SKILLS_DIR)
-	cp -R .agents/skills/atlantis $(SKILLS_DIR)/atlantis
+	rm -rf "$(SKILLS_DIR)/atlantis"
+	install -d "$(SKILLS_DIR)"
+	cp -R .agents/skills/atlantis "$(SKILLS_DIR)/atlantis"
 
-install-omp:
-	rm -rf $(OMP_SKILLS_DIR)/atlantis
-	install -d $(OMP_SKILLS_DIR)
-	cp -R .agents/skills/atlantis $(OMP_SKILLS_DIR)/atlantis
-	install -d $(OMP_EXTENSIONS_DIR)
-	install -m 0644 integrations/pi/brain-context.ts $(OMP_EXTENSIONS_DIR)/atlantis-brain.ts
+install-omp: build
+	rm -rf "$(OMP_SKILLS_DIR)/atlantis"
+	install -d "$(OMP_SKILLS_DIR)"
+	cp -R .agents/skills/atlantis "$(OMP_SKILLS_DIR)/atlantis"
+	bin/atlantis integrations install omp --dir "$(OMP_EXTENSIONS_DIR)"
 
-install-pi:
-	install -d $(PI_EXTENSIONS_DIR)
-	install -m 0644 integrations/pi/brain-context.ts $(PI_EXTENSIONS_DIR)/atlantis-brain.ts
+install-pi: build
+	bin/atlantis integrations install pi --dir "$(PI_EXTENSIONS_DIR)"
 
-install-opencode:
-	install -d $(OPENCODE_PLUGINS_DIR)
-	install -m 0644 integrations/opencode/atlantis-brain.js $(OPENCODE_PLUGINS_DIR)/atlantis-brain.js
+install-opencode: build
+	bin/atlantis integrations install opencode --dir "$(OPENCODE_PLUGINS_DIR)"
 
 install-integrations: install-skill install-omp install-pi install-opencode
-	install -d $(ATLANTIS_DATA_DIR)/hooks
-	install -m 0755 integrations/hooks/brain-inject.sh $(ATLANTIS_DATA_DIR)/hooks/brain-inject.sh
-	install -m 0755 integrations/hooks/brain-index.sh $(ATLANTIS_DATA_DIR)/hooks/brain-index.sh
+	install -d "$(ATLANTIS_DATA_DIR)/hooks"
+	install -m 0755 integrations/hooks/brain-inject.sh "$(ATLANTIS_DATA_DIR)/hooks/brain-inject.sh"
+	install -m 0755 integrations/hooks/brain-index.sh "$(ATLANTIS_DATA_DIR)/hooks/brain-index.sh"
+	install -m 0755 integrations/hooks/brain-stop-reflect.sh "$(ATLANTIS_DATA_DIR)/hooks/brain-stop-reflect.sh"
 
 install-all: install install-integrations
 

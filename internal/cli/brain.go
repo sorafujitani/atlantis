@@ -53,6 +53,24 @@ func (a *app) brainCommand() *cobra.Command {
 			},
 		},
 		&cobra.Command{
+			Use: "context", Short: "Print refreshed agent context", Args: cobra.NoArgs,
+			RunE: func(_ *cobra.Command, _ []string) error {
+				selected, err := vault()
+				if err != nil {
+					return err
+				}
+				context, err := selected.Context()
+				if err != nil {
+					return err
+				}
+				if a.output != "plain" {
+					return a.print(map[string]any{"brain_dir": selected.Root, "context": context}, context)
+				}
+				_, err = fmt.Fprint(a.stdout, context)
+				return err
+			},
+		},
+		&cobra.Command{
 			Use: "check", Short: "Validate links, reachability, and note size", Args: cobra.NoArgs,
 			RunE: func(_ *cobra.Command, _ []string) error {
 				selected, err := vault()

@@ -15,6 +15,12 @@ import (
 const (
 	defaultDirectory = "brain"
 	maxNoteLines     = 50
+	contextPrefix    = "Brain vault index. Read only the linked notes relevant to the task before acting. " +
+		"Capture lessons per [[protocol/self-improvement]] (common vs local). " +
+		"HARD SAFETY: never create a GitHub repo unless the user explicitly asked in this conversation " +
+		"(no gh repo create / API create / unsolicited remote bootstrap). " +
+		"Never invent git/GitHub identity — use only existing git config, authenticated account data, " +
+		"or explicit user values; no fabricated noreply emails, authors, or collaborators.\n\n"
 )
 
 var wikiLinkPattern = regexp.MustCompile(`\[\[([^]#|]+)`)
@@ -90,6 +96,18 @@ func (v *Vault) Index() error {
 	return v.indexRoot()
 }
 
+// Context refreshes the derived index and returns the complete agent context.
+func (v *Vault) Context() (string, error) {
+	if err := v.Index(); err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(filepath.Join(v.Root, "index.md"))
+	if err != nil {
+		return "", fmt.Errorf("read brain index: %w", err)
+	}
+	return contextPrefix + string(data), nil
+}
+
 func (v *Vault) indexPlans() error {
 	plansDir := filepath.Join(v.Root, "plans")
 	entries, err := os.ReadDir(plansDir)
@@ -127,11 +145,21 @@ func (v *Vault) indexRoot() error {
 	sections := []string{}
 	standalone := []string{}
 	for _, entry := range entries {
-		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
-			sections = append(sections, entry.Name())
+		name := entry.Name()
+		if strings.HasPrefix(name, ".") || name == "common" {
+			continue
 		}
-		if entry.Type().IsRegular() && strings.HasSuffix(entry.Name(), ".md") && entry.Name() != "index.md" {
-			standalone = append(standalone, strings.TrimSuffix(entry.Name(), ".md"))
+		full := filepath.Join(v.Root, name)
+		isDir, dirErr := dirEntryIsDir(entry, full)
+		if dirErr != nil {
+			return dirErr
+		}
+		if isDir {
+			sections = append(sections, name)
+			continue
+		}
+		if name != "index.md" && isMarkdownNote(entry, full) {
+			standalone = append(standalone, strings.TrimSuffix(name, ".md"))
 		}
 	}
 	sort.Strings(sections)
@@ -189,13 +217,8 @@ func (v *Vault) sectionLinks(section string) ([]string, string, error) {
 	}
 
 	links := []string{}
-	err := filepath.WalkDir(filepath.Join(v.Root, section), func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-			return nil
-		}
+	sectionRoot := filepath.Join(v.Root, section)
+	err := walkMarkdown(sectionRoot, func(path string) error {
 		relative, relErr := filepath.Rel(v.Root, path)
 		if relErr != nil {
 			return relErr
@@ -288,24 +311,111 @@ func (v *Vault) FinishPlan(slug string) error {
 
 func (v *Vault) markdownFiles() (map[string]string, error) {
 	files := map[string]string{}
-	err := filepath.WalkDir(v.Root, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-			return nil
-		}
+	err := walkMarkdown(v.Root, func(path string) error {
 		relative, relErr := filepath.Rel(v.Root, path)
 		if relErr != nil {
 			return relErr
 		}
-		files[filepath.ToSlash(strings.TrimSuffix(relative, ".md"))] = path
+		slash := filepath.ToSlash(relative)
+		// common/ is the git checkout backing symlinked sections; index via principles/workflow/protocol only.
+		if slash == "common" || strings.HasPrefix(slash, "common/") {
+			return nil
+		}
+		files[strings.TrimSuffix(slash, ".md")] = path
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("walk brain directory: %w", err)
 	}
 	return files, nil
+}
+
+func dirEntryIsDir(entry os.DirEntry, fullPath string) (bool, error) {
+	if entry.IsDir() {
+		return true, nil
+	}
+	if entry.Type()&os.ModeSymlink == 0 {
+		return false, nil
+	}
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return false, fmt.Errorf("stat %s: %w", fullPath, err)
+	}
+	return info.IsDir(), nil
+}
+
+func isMarkdownNote(entry os.DirEntry, fullPath string) bool {
+	if !strings.HasSuffix(entry.Name(), ".md") {
+		return false
+	}
+	if entry.Type().IsRegular() {
+		return true
+	}
+	if entry.Type()&os.ModeSymlink == 0 {
+		return false
+	}
+	info, err := os.Stat(fullPath)
+	return err == nil && info.Mode().IsRegular()
+}
+
+// walkMarkdown visits .md files under root, following directory symlinks once.
+func walkMarkdown(root string, visit func(path string) error) error {
+	info, err := os.Stat(root)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		if strings.HasSuffix(root, ".md") {
+			return visit(root)
+		}
+		return nil
+	}
+
+	seen := map[string]bool{}
+	var walk func(string) error
+	walk = func(dir string) error {
+		real, err := filepath.EvalSymlinks(dir)
+		if err != nil {
+			return err
+		}
+		if seen[real] {
+			return nil
+		}
+		seen[real] = true
+
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			name := entry.Name()
+			if strings.HasPrefix(name, ".") {
+				continue
+			}
+			full := filepath.Join(dir, name)
+			// Skip nested common checkouts when walking the vault root.
+			if name == "common" && filepath.Clean(dir) == filepath.Clean(root) {
+				continue
+			}
+			isDir, err := dirEntryIsDir(entry, full)
+			if err != nil {
+				return err
+			}
+			if isDir {
+				if err := walk(full); err != nil {
+					return err
+				}
+				continue
+			}
+			if isMarkdownNote(entry, full) {
+				if err := visit(full); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+	return walk(root)
 }
 
 func resolveLink(source, target string, files map[string]string) string {

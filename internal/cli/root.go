@@ -38,7 +38,7 @@ func NewCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	root.SetOut(stdout)
 	root.SetErr(stderr)
 	root.PersistentFlags().StringVarP(&a.output, "output", "o", "plain", "output format: plain or json")
-	root.AddCommand(a.brainCommand(), versionCommand())
+	root.AddCommand(a.brainCommand(), a.integrationsCommand(), versionCommand())
 	return root
 }
 

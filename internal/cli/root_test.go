@@ -3,6 +3,8 @@ package cli
 import (
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -31,6 +33,41 @@ func TestBrainLifecycle(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "reachable") {
 		t.Fatalf("stdout = %q", stdout.String())
+	}
+}
+
+func TestBrainContextCommand(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	var stdout, stderr bytes.Buffer
+	if err := Execute(context.Background(), strings.NewReader(""), &stdout, &stderr, []string{"brain", "--dir", root, "init"}); err != nil {
+		t.Fatal(err)
+	}
+	stdout.Reset()
+	if err := Execute(context.Background(), strings.NewReader(""), &stdout, &stderr, []string{"brain", "--dir", root, "context"}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stdout.String(), "HARD SAFETY:") || !strings.Contains(stdout.String(), "# Brain") {
+		t.Fatalf("stdout = %q", stdout.String())
+	}
+}
+
+func TestIntegrationsInstallCommand(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	legacy := filepath.Join(dir, "atlantis-brain.ts")
+	if err := os.WriteFile(legacy, []byte("legacy"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	if err := Execute(context.Background(), strings.NewReader(""), &stdout, &stderr, []string{"integrations", "install", "pi", "--dir", dir}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "atlantis-brain.js")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
+		t.Fatalf("legacy adapter still exists: %v", err)
 	}
 }
 
