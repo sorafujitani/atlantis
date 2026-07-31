@@ -1,0 +1,28 @@
+#!/bin/sh
+# When pushing main, refresh the local binary and installed skills so PATH
+# atlantis matches what just went to origin/main.
+set -eu
+
+repo_root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+cd "$repo_root"
+
+pushing_main=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+	case "$remote_ref" in
+	refs/heads/main)
+		# delete
+		if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+			continue
+		fi
+		pushing_main=1
+		;;
+	esac
+done
+
+if [ "$pushing_main" -ne 1 ]; then
+	exit 0
+fi
+
+echo "atlantis pre-push: installing local binary and skills from $repo_root"
+make install install-skill
+echo "atlantis pre-push: $(command -v atlantis) -> $(atlantis version)"

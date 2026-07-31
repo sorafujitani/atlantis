@@ -1,4 +1,4 @@
-.PHONY: build install install-brain install-skill install-omp install-pi install-opencode install-cursor install-integrations install-all test race lint vet vuln snapshot
+.PHONY: build install install-brain install-skill install-omp install-pi install-opencode install-cursor install-git-hooks install-integrations install-all test race lint vet vuln snapshot
 
 INSTALL_DIR ?= $(HOME)/.local/bin
 SKILLS_DIR ?= $(HOME)/.agents/skills
@@ -55,13 +55,19 @@ install-cursor:
 	"$(ATLANTIS_DATA_DIR)/hooks/cursor-brain-sync.sh"
 	@echo "Merge Cursor hooks into $(CURSOR_HOOKS_JSON) (see docs/integrations.md)."
 
+# Wire repo-local hooks (no global git config). Safe to re-run.
+install-git-hooks:
+	install -d "$(CURDIR)/.git/hooks"
+	ln -sfn "$(CURDIR)/.githooks/pre-push" "$(CURDIR)/.git/hooks/pre-push"
+	@echo "Installed .git/hooks/pre-push -> .githooks/pre-push (runs make install install-skill when pushing main)."
+
 install-integrations: install-skill install-omp install-pi install-opencode install-cursor
 	install -d "$(ATLANTIS_DATA_DIR)/hooks"
 	install -m 0755 integrations/hooks/brain-inject.sh "$(ATLANTIS_DATA_DIR)/hooks/brain-inject.sh"
 	install -m 0755 integrations/hooks/brain-index.sh "$(ATLANTIS_DATA_DIR)/hooks/brain-index.sh"
 	install -m 0755 integrations/hooks/brain-stop-reflect.sh "$(ATLANTIS_DATA_DIR)/hooks/brain-stop-reflect.sh"
 
-install-all: install install-brain install-integrations
+install-all: install install-brain install-integrations install-git-hooks
 
 test:
 	go test ./...

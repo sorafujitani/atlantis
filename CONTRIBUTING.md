@@ -12,8 +12,11 @@
 git clone https://github.com/sorafujitani/atlantis
 cd atlantis
 go mod download
+make install-git-hooks
 make test
 ```
+
+`make install-git-hooks` links `.githooks/pre-push` into `.git/hooks/`. Pushing `main` runs `make install install-skill` so `~/.local/bin/atlantis` and `~/.agents/skills/` match the checkout (build failure aborts the push).
 
 ## Required checks
 
