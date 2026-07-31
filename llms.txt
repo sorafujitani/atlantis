@@ -6,7 +6,7 @@ Portable coding-agent operating mode and persistent Brain maintenance.
 
 - README.md: installation, commands, Agent Skill, and safety boundaries
 - docs/architecture.md: ownership and dependency direction
-- docs/integrations.md: Claude Code, Codex, Cursor, Pi, OMP, OpenCode, and Skill installation
+- docs/integrations.md: Claude Code, Codex, Cursor, Pi, OMP, OpenCode, Skill, and verification-skill installation
 
 ## Core
 
@@ -14,3 +14,6 @@ Portable coding-agent operating mode and persistent Brain maintenance.
 - internal/cli: Brain maintenance and version commands
 - integrations: native Brain context loading for supported harnesses
 - .agents/skills/atlantis: operating mode and playbooks
+- .agents/skills/create-verification-skill: generate project-local verify-<app> skills
+- .agents/skills/maintain-verification-skill: audit and refresh verify-<app> feature maps
+- .agents/skills/verify-atlantis: dogfood verification map for the Atlantis CLI

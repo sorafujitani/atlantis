@@ -189,8 +189,20 @@ then emits Cursor `additional_context` JSON. The rule / AGENTS.md sync is the re
 
 ## Skill
 
-`make install-skill` installs the complete `atlantis` skill into `~/.agents/skills/atlantis`. It is also installable from GitHub:
+`make install-skill` installs every skill under `.agents/skills/` into `~/.agents/skills/` (Atlantis operating mode, verification meta-skills, and `verify-atlantis`). The Atlantis skill alone is also installable from GitHub:
 
 ```bash
 npx skills add https://github.com/sorafujitani/atlantis --skill atlantis -g -y
 ```
+
+## Verification skills
+
+Portable counterparts to project-local "drive the real app" skills:
+
+| Skill | Role |
+| --- | --- |
+| `create-verification-skill` | Interview the repo; write `.agents/skills/verify-<app>/` with Launch / Doctor / Drive / Evidence / Cleanup and a feature map; prove one feature live before handoff |
+| `maintain-verification-skill` | Source wave + live pass over an existing map; outcomes `clean` / `changed` / `blocked` |
+| `verify-atlantis` | Dogfood map for this CLI (disposable brain dirs only) |
+
+Evidence defaults to `<repo>/.atlantis/verify-artifacts/` (gitignored). When a project has `verify-<app>`, Atlantis **control** means follow that skill. Durable gotchas that would help a different task go to the brain via reflect; session run notes stay under `.atlantis/` and are not archived in the vault.

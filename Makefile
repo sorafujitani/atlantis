@@ -22,14 +22,20 @@ install: build
 	install -m 0755 bin/atlantis "$(INSTALL_DIR)/atlantis"
 
 install-skill:
-	rm -rf "$(SKILLS_DIR)/atlantis"
 	install -d "$(SKILLS_DIR)"
-	cp -R .agents/skills/atlantis "$(SKILLS_DIR)/atlantis"
+	@for skill in .agents/skills/*; do \
+		name=$$(basename "$$skill"); \
+		rm -rf "$(SKILLS_DIR)/$$name"; \
+		cp -R "$$skill" "$(SKILLS_DIR)/$$name"; \
+	done
 
 install-omp: build
-	rm -rf "$(OMP_SKILLS_DIR)/atlantis"
 	install -d "$(OMP_SKILLS_DIR)"
-	cp -R .agents/skills/atlantis "$(OMP_SKILLS_DIR)/atlantis"
+	@for skill in .agents/skills/*; do \
+		name=$$(basename "$$skill"); \
+		rm -rf "$(OMP_SKILLS_DIR)/$$name"; \
+		cp -R "$$skill" "$(OMP_SKILLS_DIR)/$$name"; \
+	done
 	bin/atlantis integrations install omp --dir "$(OMP_EXTENSIONS_DIR)"
 
 install-pi: build

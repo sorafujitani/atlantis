@@ -52,7 +52,8 @@ Harness integrations read `brain/index.md` directly and agents open its linked n
 - **why** means history inspection with `git log`, `git blame`, issues, and PRs.
 - **architect** means comparing concrete designs before implementation.
 - **interrogate** means adversarial review from distinct correctness, simplicity, operational, and security lenses.
-- **control** means driving the matching browser, CLI, TUI, server, or simulator rather than relying on proxies.
+- **control** means driving the matching browser, CLI, TUI, server, or simulator rather than relying on proxies. When the project has `.agents/skills/verify-<app>/`, that skill's Launch / Doctor / Drive / Evidence / Cleanup is the control procedure — do not invent a parallel path.
+- **create-verification-skill** / **maintain-verification-skill** mean the installed meta-skills that author and audit project-local `verify-<app>` skills (see `playbooks/verification-skill.md`).
 - **babysit** means owning CI and review follow-up after opening a PR.
 - **show-me-your-work** means a compact decision log for long or unattended work.
 - **figure-it-out** means the `brain-plan` skill for a temporary phased plan.
@@ -72,6 +73,7 @@ Harness integrations read `brain/index.md` directly and agents open its linked n
 - Runtime or trace forensics: `playbooks/runtime-forensics.md`, `playbooks/trace-forensics.md`
 - Visual parity: `playbooks/visual-parity.md`
 - Skill authoring: `playbooks/authoring-a-skill.md`
+- Verification skill: `playbooks/verification-skill.md`
 - Eval: `playbooks/eval.md`
 - Autonomous run: `playbooks/autonomous-run.md`
 - Session pickup or pause: `playbooks/session-pickup.md`, `playbooks/pause-safely.md`
