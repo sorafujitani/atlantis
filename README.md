@@ -26,7 +26,7 @@ From a checkout, install the binary, shared Skill, and harness integrations:
 make install-all
 ```
 
-Claude Code, Codex, Pi, OMP, and OpenCode setup is documented in [docs/integrations.md](./docs/integrations.md).
+Claude Code, Codex, Cursor, Pi, OMP, and OpenCode setup is documented in [docs/integrations.md](./docs/integrations.md).
 
 ## Brain
 

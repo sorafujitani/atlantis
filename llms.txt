@@ -6,7 +6,7 @@ Portable coding-agent operating mode and persistent Brain maintenance.
 
 - README.md: installation, commands, Agent Skill, and safety boundaries
 - docs/architecture.md: ownership and dependency direction
-- docs/integrations.md: Claude Code, Codex, Pi, OMP, OpenCode, and Skill installation
+- docs/integrations.md: Claude Code, Codex, Cursor, Pi, OMP, OpenCode, and Skill installation
 
 ## Core
 

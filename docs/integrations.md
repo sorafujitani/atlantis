@@ -2,19 +2,25 @@
 
 Atlantis keeps the vault outside the repository. Set `ATLANTIS_BRAIN_DIR` to override the default `~/brain`.
 
+Portable documents (`principles/`, `protocol/`) are managed in this repository under `brain/` and embedded in the binary. Everything else in the vault is local to the machine.
+
 Recommended vault shape:
 
 ```text
 ~/brain/
-  common/          # git clone of agent-brain-common (principles, portable workflow, protocol)
-  principles -> common/principles
-  protocol -> common/protocol
-  workflow/        # common file symlinks + local-only notes
-  codebase/ env/ plans/   # local
-  index.md         # generated
+  principles.md principles/   # installed by `atlantis brain seed`
+  protocol/                   # installed by `atlantis brain seed`
+  workflow/ codebase/ env/ plans/   # local notes
+  index.md                    # generated
 ```
 
-`atlantis brain index` follows symlinks and skips the `common/` checkout directory itself so notes are indexed via stable paths (`principles/`, `workflow/`, `protocol/`).
+Install or refresh the repo-managed documents:
+
+```bash
+atlantis brain seed
+```
+
+`brain seed` replaces the repo-managed files and leaves local notes untouched. `atlantis brain index` follows symlinks, so a vault may still link notes in from elsewhere.
 
 The Go binary embeds one minimal JavaScript adapter because the host extension APIs require JavaScript modules. Context generation and installation live in Go; the adapter only maps Pi/OMP and OpenCode lifecycle events to `atlantis brain context`.
 
@@ -143,6 +149,43 @@ Install the same hook scripts, then merge this into `~/.codex/hooks.json`:
 ```
 
 The session hook runs `atlantis brain context`. `PostToolUse` keeps the derived index current through the separate maintenance hook.
+
+## Cursor
+
+Install the Cursor hook scripts and materialize the always-applied Brain rule:
+
+```bash
+make install-cursor
+```
+
+Then merge these hooks into `~/.cursor/hooks.json` (preserve unrelated hooks such as herdr):
+
+```json
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "~/.local/share/atlantis/hooks/cursor-brain-inject.sh",
+        "timeout": 15
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "~/.local/share/atlantis/hooks/cursor-brain-index.sh",
+        "timeout": 10
+      }
+    ]
+  }
+}
+```
+
+`cursor-brain-inject.sh` syncs Brain context into:
+
+1. `~/.cursor/rules/atlantis-brain.mdc` (`alwaysApply: true`)
+2. a generated section in `~/AGENTS.md` between `<!-- atlantis-brain:start -->` and `<!-- atlantis-brain:end -->`
+
+then emits Cursor `additional_context` JSON. The rule / AGENTS.md sync is the reliable injection path: Agents Window has dropped `sessionStart` `additional_context` due to a composer timing bug even when the Hooks channel reports a successful merge. `afterFileEdit` refreshes the derived index and rewrites those surfaces when content changes.
 
 ## Skill
 

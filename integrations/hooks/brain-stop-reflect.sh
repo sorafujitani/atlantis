@@ -45,7 +45,7 @@ with open(sentinel, "w", encoding="utf-8"):
 msg = """End-of-session brain capture is mandatory for non-trivial turns.
 
 Read [[protocol/self-improvement]] if needed, then either:
-1) write/update the smallest durable note (common vs local routing), or
+1) write/update the smallest durable note (repo-managed vs local routing), or
 2) finish with the exact line: no durable lesson
 
 Do not ask the user whether to reflect. Capture corrections, failed verifications, gotchas, and repeated friction. Prefer structural enforcement over prose when possible."""

@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,7 +17,7 @@ const (
 	defaultDirectory = "brain"
 	maxNoteLines     = 50
 	contextPrefix    = "Brain vault index. Read only the linked notes relevant to the task before acting. " +
-		"Capture lessons per [[protocol/self-improvement]] (common vs local). " +
+		"Capture lessons per [[protocol/self-improvement]] (repo-managed vs local). " +
 		"HARD SAFETY: never create a GitHub repo unless the user explicitly asked in this conversation " +
 		"(no gh repo create / API create / unsolicited remote bootstrap). " +
 		"Never invent git/GitHub identity — use only existing git config, authenticated account data, " +
@@ -85,6 +86,33 @@ func (v *Vault) Init() error {
 	return v.Index()
 }
 
+// Seed installs the repo-managed documents, replacing any local copies.
+func (v *Vault) Seed(src fs.FS) error {
+	return fs.WalkDir(src, ".", func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(v.Root, filepath.FromSlash(path))
+		if entry.IsDir() {
+			if err := os.MkdirAll(target, 0o700); err != nil {
+				return fmt.Errorf("create %s: %w", path, err)
+			}
+			return nil
+		}
+		data, err := fs.ReadFile(src, path)
+		if err != nil {
+			return fmt.Errorf("read seed %s: %w", path, err)
+		}
+		if err := os.Remove(target); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("replace %s: %w", path, err)
+		}
+		if err := os.WriteFile(target, data, 0o600); err != nil {
+			return fmt.Errorf("write %s: %w", path, err)
+		}
+		return nil
+	})
+}
+
 // Index regenerates plans/index.md and the root index deterministically.
 func (v *Vault) Index() error {
 	if _, err := os.Stat(v.Root); err != nil {
@@ -146,7 +174,7 @@ func (v *Vault) indexRoot() error {
 	standalone := []string{}
 	for _, entry := range entries {
 		name := entry.Name()
-		if strings.HasPrefix(name, ".") || name == "common" {
+		if strings.HasPrefix(name, ".") {
 			continue
 		}
 		full := filepath.Join(v.Root, name)
@@ -316,12 +344,7 @@ func (v *Vault) markdownFiles() (map[string]string, error) {
 		if relErr != nil {
 			return relErr
 		}
-		slash := filepath.ToSlash(relative)
-		// common/ is the git checkout backing symlinked sections; index via principles/workflow/protocol only.
-		if slash == "common" || strings.HasPrefix(slash, "common/") {
-			return nil
-		}
-		files[strings.TrimSuffix(slash, ".md")] = path
+		files[strings.TrimSuffix(filepath.ToSlash(relative), ".md")] = path
 		return nil
 	})
 	if err != nil {
@@ -393,10 +416,6 @@ func walkMarkdown(root string, visit func(path string) error) error {
 				continue
 			}
 			full := filepath.Join(dir, name)
-			// Skip nested common checkouts when walking the vault root.
-			if name == "common" && filepath.Clean(dir) == filepath.Clean(root) {
-				continue
-			}
 			isDir, err := dirEntryIsDir(entry, full)
 			if err != nil {
 				return err

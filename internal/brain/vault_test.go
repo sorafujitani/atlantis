@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"testing/fstest"
 )
 
 func TestVaultLifecycle(t *testing.T) {
@@ -55,62 +56,49 @@ func TestVaultLifecycle(t *testing.T) {
 	}
 }
 
-func TestIndexFollowsSymlinkedCommonCheckout(t *testing.T) {
+func TestSeedInstallsRepoDocumentsAndReplacesLocalCopies(t *testing.T) {
 	t.Parallel()
-	base := t.TempDir()
-	root := filepath.Join(base, "brain")
-	common := filepath.Join(base, "common")
-	if err := os.MkdirAll(root, 0o700); err != nil {
+	root := t.TempDir()
+	vault, err := New(root)
+	if err != nil {
 		t.Fatal(err)
 	}
-	writeTestFile(t, common, "principles.md", "# Principles\n- [[principles/prove-it-works]]\n")
-	writeTestFile(t, common, "principles/prove-it-works.md", "# Prove It Works\n")
-	writeTestFile(t, common, "workflow/git-push-safety.md", "# Git Push Safety\n")
-	writeTestFile(t, common, "protocol/self-improvement.md", "# Self Improvement\n")
-
-	if err := os.Symlink(common, filepath.Join(root, "common")); err != nil {
+	if err := vault.Init(); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink("common/principles", filepath.Join(root, "principles")); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink("common/principles.md", filepath.Join(root, "principles.md")); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink("common/protocol", filepath.Join(root, "protocol")); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, "workflow"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink("../common/workflow/git-push-safety.md", filepath.Join(root, "workflow", "git-push-safety.md")); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, root, "principles/prove-it-works.md", "# Stale\n")
 	writeTestFile(t, root, "workflow/local-only.md", "# Local Only\n")
 	writeTestFile(t, root, "codebase/app.md", "# App\n")
 
-	vault, err := New(root)
-	if err != nil {
+	seed := fstest.MapFS{
+		"principles.md":                {Data: []byte("# Principles\n- [[principles/prove-it-works]]\n")},
+		"principles/prove-it-works.md": {Data: []byte("# Prove It Works\n")},
+		"protocol/self-improvement.md": {Data: []byte("# Self Improvement\n")},
+	}
+	if err := vault.Seed(seed); err != nil {
 		t.Fatal(err)
 	}
 	if err := vault.Index(); err != nil {
 		t.Fatal(err)
 	}
 
+	if got := readTestFile(t, root, "principles/prove-it-works.md"); got != "# Prove It Works\n" {
+		t.Fatalf("seed did not replace local copy: %q", got)
+	}
+	if got := readTestFile(t, root, "workflow/local-only.md"); got != "# Local Only\n" {
+		t.Fatalf("seed clobbered a local note: %q", got)
+	}
+
 	index := readTestFile(t, root, "index.md")
 	for _, expected := range []string{
 		"[[principles]]",
 		"[[protocol/self-improvement]]",
-		"[[workflow/git-push-safety]]",
 		"[[workflow/local-only]]",
 		"[[codebase/app]]",
 	} {
 		if !strings.Contains(index, expected) {
 			t.Fatalf("index.md does not contain %q:\n%s", expected, index)
 		}
-	}
-	if strings.Contains(index, "[[common/") {
-		t.Fatalf("common checkout leaked into index:\n%s", index)
 	}
 
 	report, err := vault.Check()

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	atlantis "github.com/sorafujitani/atlantis"
 	"github.com/sorafujitani/atlantis/internal/brain"
 	"github.com/spf13/cobra"
 )
@@ -37,6 +38,22 @@ func (a *app) brainCommand() *cobra.Command {
 					return err
 				}
 				return a.print(map[string]any{"brain_dir": selected.Root, "initialized": true}, selected.Root)
+			},
+		},
+		&cobra.Command{
+			Use: "seed", Short: "Install repo-managed brain documents", Args: cobra.NoArgs,
+			RunE: func(_ *cobra.Command, _ []string) error {
+				selected, err := vault()
+				if err != nil {
+					return err
+				}
+				if err := selected.Seed(atlantis.BrainSeed()); err != nil {
+					return err
+				}
+				if err := selected.Index(); err != nil {
+					return err
+				}
+				return a.print(map[string]any{"brain_dir": selected.Root, "seeded": true}, "seeded "+selected.Root)
 			},
 		},
 		&cobra.Command{
