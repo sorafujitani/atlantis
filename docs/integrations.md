@@ -24,6 +24,8 @@ atlantis brain seed
 
 The Go binary embeds one minimal JavaScript adapter because the host extension APIs require JavaScript modules. Context generation and installation live in Go; the adapter only maps Pi/OMP and OpenCode lifecycle events to `atlantis brain context`.
 
+Vault source Markdown is fingerprinted into `.atlantis-cache.json`. Unchanged sources skip index rewrites. Host adapters call `atlantis brain context --print-fingerprint` (or JSON context) so they can avoid respawning the CLI when the digest is unchanged. Cursor sync keeps a stamp beside the generated rule for the same purpose.
+
 Install all embedded adapters from a release binary:
 
 ```bash

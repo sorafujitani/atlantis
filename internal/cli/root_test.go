@@ -52,6 +52,31 @@ func TestBrainContextCommand(t *testing.T) {
 	}
 }
 
+func TestBrainContextJSONIncludesFingerprint(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	var stdout, stderr bytes.Buffer
+	if err := Execute(context.Background(), strings.NewReader(""), &stdout, &stderr, []string{"brain", "--dir", root, "init"}); err != nil {
+		t.Fatal(err)
+	}
+	stdout.Reset()
+	if err := Execute(context.Background(), strings.NewReader(""), &stdout, &stderr, []string{"-o", "json", "brain", "--dir", root, "context"}); err != nil {
+		t.Fatal(err)
+	}
+	out := stdout.String()
+	if !strings.Contains(out, `"fingerprint"`) || !strings.Contains(out, `"context"`) {
+		t.Fatalf("stdout = %q", out)
+	}
+	stdout.Reset()
+	if err := Execute(context.Background(), strings.NewReader(""), &stdout, &stderr, []string{"brain", "--dir", root, "context", "--print-fingerprint"}); err != nil {
+		t.Fatal(err)
+	}
+	fp := strings.TrimSpace(stdout.String())
+	if len(fp) != 64 {
+		t.Fatalf("fingerprint = %q", fp)
+	}
+}
+
 func TestIntegrationsInstallCommand(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

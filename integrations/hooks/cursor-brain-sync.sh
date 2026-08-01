@@ -3,13 +3,23 @@
 # Agents Window can drop sessionStart additional_context; these paths are reliable.
 set -eu
 
-context="$(atlantis brain context)" || exit 0
-
 rule_dir="${HOME:?HOME is required}/.cursor/rules"
 rule_path="${rule_dir}/atlantis-brain.mdc"
+stamp_path="${rule_dir}/.atlantis-brain.fingerprint"
 agents_path="${HOME}/AGENTS.md"
 start_mark='<!-- atlantis-brain:start -->'
 end_mark='<!-- atlantis-brain:end -->'
+
+fingerprint="$(atlantis brain context --print-fingerprint)" || exit 0
+fingerprint="$(printf '%s' "$fingerprint" | tr -d '\n')"
+if [ -n "$fingerprint" ] && [ -f "$stamp_path" ] && [ -f "$rule_path" ]; then
+	previous="$(tr -d '\n' <"$stamp_path" 2>/dev/null || true)"
+	if [ "$fingerprint" = "$previous" ]; then
+		exit 0
+	fi
+fi
+
+context="$(atlantis brain context)" || exit 0
 
 mkdir -p "$rule_dir"
 tmp="$(mktemp "${TMPDIR:-/tmp}/atlantis-cursor-brain.XXXXXX")"
@@ -48,4 +58,9 @@ else:
 if new != text:
     path.write_text(new, encoding="utf-8")
 PY
+fi
+
+if [ -n "$fingerprint" ]; then
+	printf '%s\n' "$fingerprint" >"$stamp_path"
+	chmod 600 "$stamp_path"
 fi

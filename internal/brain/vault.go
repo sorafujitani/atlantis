@@ -113,27 +113,63 @@ func (v *Vault) Seed(src fs.FS) error {
 	})
 }
 
-// Index regenerates plans/index.md and the root index deterministically.
+// Index regenerates plans/index.md and the root index when the vault fingerprint changed.
 func (v *Vault) Index() error {
-	if _, err := os.Stat(v.Root); err != nil {
-		return fmt.Errorf("inspect brain directory: %w", err)
-	}
-	if err := v.indexPlans(); err != nil {
-		return err
-	}
-	return v.indexRoot()
+	_, err := v.refresh(false)
+	return err
 }
 
-// Context refreshes the derived index and returns the complete agent context.
+// ForceIndex regenerates indexes and rewrites the cache regardless of fingerprint.
+func (v *Vault) ForceIndex() error {
+	_, err := v.refresh(true)
+	return err
+}
+
+// Context refreshes the derived index when needed and returns the complete agent context.
 func (v *Vault) Context() (string, error) {
-	if err := v.Index(); err != nil {
+	result, err := v.ContextResult(false)
+	if err != nil {
 		return "", err
 	}
-	data, err := os.ReadFile(filepath.Join(v.Root, "index.md"))
-	if err != nil {
-		return "", fmt.Errorf("read brain index: %w", err)
+	return result.Context, nil
+}
+
+// ContextResult refreshes indexes when needed and returns context plus fingerprint.
+func (v *Vault) ContextResult(force bool) (ContextResult, error) {
+	return v.refresh(force)
+}
+
+func (v *Vault) refresh(force bool) (ContextResult, error) {
+	if _, err := os.Stat(v.Root); err != nil {
+		return ContextResult{}, fmt.Errorf("inspect brain directory: %w", err)
 	}
-	return contextPrefix + string(data), nil
+	fingerprint, err := v.Fingerprint()
+	if err != nil {
+		return ContextResult{}, err
+	}
+	if hit, ok, hitErr := v.cacheHit(force, fingerprint); hitErr != nil {
+		return ContextResult{}, hitErr
+	} else if ok {
+		return hit, nil
+	}
+	if err := v.indexPlans(); err != nil {
+		return ContextResult{}, err
+	}
+	if err := v.indexRoot(); err != nil {
+		return ContextResult{}, err
+	}
+	data, err := os.ReadFile(filepath.Join(v.Root, "index.md")) //nolint:gosec // index path is constructed inside the selected vault
+	if err != nil {
+		return ContextResult{}, fmt.Errorf("read brain index: %w", err)
+	}
+	result := ContextResult{
+		Context:     contextPrefix + string(data),
+		Fingerprint: fingerprint,
+	}
+	if err := v.writeCache(cacheFile{Fingerprint: fingerprint, Context: result.Context}); err != nil {
+		return ContextResult{}, err
+	}
+	return result, nil
 }
 
 func (v *Vault) indexPlans() error {

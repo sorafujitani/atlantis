@@ -12,31 +12,44 @@ async function runAtlantis(args) {
   return result.stdout;
 }
 
+async function loadContext(state, exec) {
+  const fingerprint = (await exec(["brain", "context", "--print-fingerprint"])).trim();
+  if (fingerprint && fingerprint === state.fingerprint && state.context) {
+    return state.context;
+  }
+  const raw = await exec(["-o", "json", "brain", "context"]);
+  const parsed = JSON.parse(raw);
+  state.fingerprint = typeof parsed.fingerprint === "string" ? parsed.fingerprint : fingerprint;
+  state.context = typeof parsed.context === "string" ? parsed.context : "";
+  return state.context;
+}
 
 function registerPiExtension(pi) {
-  let context = "";
+  const state = { fingerprint: "", context: "" };
+  const exec = async (args) => {
+    const result = await pi.exec("atlantis", args, { timeout: 10_000 });
+    return result.stdout;
+  };
 
   async function refresh() {
-    const result = await pi.exec("atlantis", ["brain", "context"], {
-      timeout: 10_000,
-    });
-    context = result.stdout;
+    await loadContext(state, exec);
   }
 
   pi.on("session_start", refresh);
   pi.on("agent_settled", refresh);
   pi.on("before_agent_start", async (event) => {
-    if (!context) {
+    if (!state.context) {
       await refresh();
     }
-    return { systemPrompt: `${event.systemPrompt}\n\n## Atlantis brain\n\n${context}` };
+    return { systemPrompt: `${event.systemPrompt}\n\n## Atlantis brain\n\n${state.context}` };
   });
 }
 
 function createOpenCodePlugin() {
+  const state = { fingerprint: "", context: "" };
   return {
     "experimental.chat.system.transform": async (_input, output) => {
-      const context = await runAtlantis(["brain", "context"]);
+      const context = await loadContext(state, runAtlantis);
       output.system.push(`## Atlantis brain\n\n${context}`);
     },
   };

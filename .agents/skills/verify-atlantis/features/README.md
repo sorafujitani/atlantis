@@ -30,5 +30,6 @@ Each feature file uses H1 + one paragraph, then H2s: `Sub-features`, `How to get
 
 - [Version](./version.md) — version and top-level help.
 - [Brain context](./brain-context.md) — disposable vault context output.
+- [Brain cache](./brain-cache.md) — fingerprint cache hit/miss and `--force`.
 - [Brain index and check](./brain-index-check.md) — index regeneration and validation.
 - [Brain seed](./brain-seed.md) — repo-managed seed without destroying local notes.

@@ -2,7 +2,7 @@
 name: verify-atlantis
 description: >-
   Drive the Atlantis CLI on a disposable brain vault to prove user-facing
-  commands (version, brain context/index/check/seed). Use when verifying
+  commands (version, brain context/cache/index/check/seed). Use when verifying
   Atlantis behavior, after CLI changes, or when Atlantis control means this
   skill.
 disable-model-invocation: true

@@ -78,8 +78,9 @@ This does not merge `~/.claude/settings.json`, `~/.codex/hooks.json`, or `~/.cur
 | --- | --- |
 | `atlantis brain init` | Create a Brain vault without replacing existing notes. |
 | `atlantis brain seed` | Replace repo-managed Brain documents and rebuild indexes. |
-| `atlantis brain index` | Regenerate derived indexes. |
-| `atlantis brain context` | Refresh indexes and print agent context. |
+| `atlantis brain index [--force]` | Regenerate derived indexes (skips work when the vault fingerprint is unchanged). |
+| `atlantis brain context [--force]` | Refresh indexes when needed and print agent context. |
+| `atlantis brain context --print-fingerprint` | Print only the vault source fingerprint. |
 | `atlantis brain check` | Validate links, reachability, and note size. |
 | `atlantis brain plan finish <slug>` | Delete one completed plan and rebuild indexes. |
 | `atlantis integrations install [omp\|pi\|opencode]` | Install one embedded adapter, or all three when no target is given. |
