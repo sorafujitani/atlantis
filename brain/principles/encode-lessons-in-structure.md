@@ -14,7 +14,7 @@ When you catch yourself writing the same instruction a second time:
 
 **Feedback Loop:**
 - **Capture every correction:** When the human intervenes or tests fail, decide if it's a one-off or a pattern
-- **Route to the right layer:** One-off -> brain note. Recurring fix -> skill or lint rule. Systemic issue -> principle
+- **Route to the right layer:** One-off -> discard or tiny brain note. Recurring procedure -> edit skill, or create skill if none owns it ([[protocol/agent-skills]]). Enforceable rule -> lint/script. Systemic judgment -> principle
 - **Close the loop:** Don't only record — apply now or create a concrete todo
 
 **Anti-Patterns:**

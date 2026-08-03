@@ -5,7 +5,7 @@ Seed installs repo-managed principles and protocol documents into a vault withou
 ## Sub-features
 
 - `seed-principles` writes `principles.md` and `principles/` into the vault.
-- `seed-protocol` writes `protocol/self-improvement.md`.
+- `seed-protocol` writes `protocol/` (at least `self-improvement.md`; also altitude, PR-thread, and agent-skills protocols when present in the seed).
 - `seed-preserves-local` leaves a pre-existing local note intact.
 
 ## How to get to it (user POV)

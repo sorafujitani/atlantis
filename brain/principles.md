@@ -16,6 +16,7 @@
 - [[principles/type-system-discipline]]
 - [[principles/make-operations-idempotent]]
 - [[principles/serialize-shared-state-mutations]]
+- [[principles/fail-fast-required-config]]
 
 ## Verification
 - [[principles/prove-it-works]]

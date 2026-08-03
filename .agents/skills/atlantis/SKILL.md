@@ -57,7 +57,7 @@ Harness integrations read `brain/index.md` directly and agents open its linked n
 - **babysit** means owning CI and review follow-up after opening a PR.
 - **show-me-your-work** means a compact decision log for long or unattended work.
 - **figure-it-out** means the `brain-plan` skill for a temporary phased plan.
-- **create-skill** means the installed skill-authoring skill.
+- **create-skill** means the installed skill-authoring skill. Create vs edit vs brain routing lives in brain `protocol/agent-skills.md`; playbook `authoring-a-skill` is the authoring checklist.
 - **tdd** means a failing regression test followed by the fix.
 
 ## Playbooks
